@@ -288,4 +288,4 @@ Inline on the column: `label: { default: 'Rank', i18n: { ko: '등급', ja: 'ラ�
 
 - URL: `.../ranking/?type=earphone#apple-airpods-max-usb-c`
 - `?type=` selects the tab; `#<slug>` selects the tab that contains the card, scrolls to it, and highlights it.
-- Slug format is controlled by `deepLink.template` + `deepLink.slugify`. CrinGraph's `listAugment.js` and modernGraphTool's `PhoneSelector.svelte` build links in this format — see [INTEGRATION-CRINGRAPH.md](/squigRanking/docs/integration/cringraph/) and [INTEGRATION-MODERNGRAPHTOOL.md](/squigRanking/docs/integration/moderngraphtool/).
+- Slug format is controlled by `deepLink.template` + `deepLink.slugify`. CrinGraph's `listAugment.js` and modernGraphTool's `PhoneSelector.svelte` build links in this format — see [the CrinGraph guide](/squigRanking/docs/integration/cringraph/) and [the modernGraphTool guide](/squigRanking/docs/integration/moderngraphtool/).

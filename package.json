@@ -17,15 +17,17 @@
   "files": [
     "dist",
     "presets",
-    "README.md",
-    "CONFIGURATION.md"
+    "site",
+    "README.md"
   ],
   "scripts": {
     "build": "rolldown -c && tsc -p tsconfig.build.json && node scripts/bundle.mjs",
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run test && npm run build",
-    "prepublishOnly": "npm run check"
+    "prepublishOnly": "npm run check",
+    "templates": "python scripts/build-templates.py",
+    "templates:check": "python scripts/build-templates.py --check"
   },
   "keywords": [
     "squiglink",

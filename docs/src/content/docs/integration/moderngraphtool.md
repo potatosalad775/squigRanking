@@ -70,4 +70,4 @@ RANKING_URL: '',
 - **Empty string vs missing key.** Both are treated as "no link." No errors are thrown.
 - **Same-tab vs new-tab.** mGT opens the link in a new tab by default. If you want same-tab navigation, that's a component-level preference — file an issue upstream rather than patching the Svelte file locally.
 - **Hash-only navigation.** If the target URL changes only the `#hash` on a page the user is already viewing (e.g. the ranking page), the browser scrolls without reloading. The ranking page listens for `hashchange` and handles this.
-- **CrinGraph parallel.** The CrinGraph equivalent is `ranking_url` in `config.js`. Same placeholder tokens, different casing. See [INTEGRATION-CRINGRAPH.md](/squigRanking/docs/integration/cringraph/).
+- **CrinGraph parallel.** The CrinGraph equivalent is `ranking_url` in `config.js`. Same placeholder tokens, different casing. See [the CrinGraph guide](/squigRanking/docs/integration/cringraph/).

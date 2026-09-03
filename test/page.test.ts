@@ -1,16 +1,18 @@
-// End-to-end wiring test: loads the real index.html and the built bundle into a
+// End-to-end wiring test: loads the real page shell and the built bundle into a
 // DOM, serves it a fixture sheet and phonebook, and asserts what the operator
-// would see. Run `npm run build` first; `npm run check` does that in order.
+// would see. The config and sheet come from the default preset, which is what
+// the build copies into dist/, so this exercises a real download.
+// Run `npm run build` first; `npm run check` does that in order.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { before, describe, test } from 'node:test';
 import { JSDOM } from 'jsdom';
 
-const html = readFileSync('index.html', 'utf8');
+const html = readFileSync('site/index.html', 'utf8');
 const bundle = readFileSync('dist/core.js', 'utf8');
-const config = readFileSync('ranking-config.js', 'utf8');
-const template = readFileSync('TEMPLATE.csv', 'utf8');
+const config = readFileSync('presets/letter/ranking-config.js', 'utf8');
+const template = readFileSync('presets/letter/TEMPLATE.csv', 'utf8');
 
 const PHONEBOOK = JSON.stringify([
   { name: 'GrinEar', phones: [{ name: 'Reference', file: 'GrinEar Reference' }] },

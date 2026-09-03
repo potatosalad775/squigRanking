@@ -1,6 +1,9 @@
-// Preset: letter grades, S through F.
-// The `scale` on the rank column is the only place the grades are defined:
-// it sets the order, the dropdown, the badge colors, the chart, and the scores.
+// Letter grades, S through F. This is the default configuration: the build
+// copies it into dist/ as ranking-config.js. The other rank styles are the
+// sibling folders in presets/.
+//
+// The `scale` on the rank column is the only place the grades are defined: it
+// sets the order, the dropdown, the badge colors, the chart, and the scores.
 // Loaded as a plain <script> before core.js, so window.RANKING_CONFIG is set at parse time.
 //
 // The JSDoc line below gives editors autocomplete and inline validation for the

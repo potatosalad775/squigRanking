@@ -367,11 +367,7 @@ def snapshot(path: str) -> list:
 
 
 def targets(preset: str) -> list[str]:
-    paths = [os.path.join(ROOT, "presets", preset, "TEMPLATE.xlsx")]
-    if preset == "letter":
-        # The root template is the letter preset, the same way TEMPLATE.csv is.
-        paths.append(os.path.join(ROOT, "TEMPLATE.xlsx"))
-    return paths
+    return [os.path.join(ROOT, "presets", preset, "TEMPLATE.xlsx")]
 
 
 def main() -> int:
