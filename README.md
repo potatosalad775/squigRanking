@@ -2,6 +2,8 @@
 
 Static, config-driven ranking page for CrinGraph / modernGraphTool squig deployments. Loads device data from a published Google Sheet CSV and renders filterable, sortable, deep-linkable device cards with rank badges and review notes.
 
+**[Documentation](https://potatosalad775.github.io/squigRanking/docs/)** · **[Config editor](https://potatosalad775.github.io/squigRanking/docs/config-editor/)** · **[Live demo](https://potatosalad775.github.io/squigRanking/)**
+
 Try `Earphones Archive Ranking page` as a reference: [EA Ranking](https://earphonesarchive.squig.link/ranking)
 
 ---
@@ -102,6 +104,8 @@ To test locally, serve the folder (e.g. `python -m http.server` from `dist/`) �
 
 All schema, filter, sort, data-source, and URL behavior lives in [`ranking-config.js`](ranking-config.js) via `window.RANKING_CONFIG`. See **[CONFIGURATION.md](CONFIGURATION.md)** for the full reference.
 
+Not comfortable editing the file directly? The **[config editor](https://potatosalad775.github.io/squigRanking/docs/config-editor/)** builds it from a form, previews the rank badges as you set them, and reads an existing config back in.
+
 The config file opens with a JSDoc annotation:
 
 ```js
@@ -136,6 +140,8 @@ npm test           # unit tests plus a jsdom pass over the built bundle
 The source is TypeScript, bundled by [rolldown](https://rolldown.rs/) into one plain IIFE. Nothing at runtime needs a module loader.
 
 ```
+docs/                 Astro Starlight documentation site and the config editor.
+presets/              Three ready-made config and TEMPLATE.csv pairs.
 src/
 ├── types.ts          Public config surface. Also emitted as dist/types.d.ts.
 ├── config.ts         Config access. No other module reads RANKING_CONFIG.

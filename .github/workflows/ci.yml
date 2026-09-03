@@ -1,0 +1,59 @@
+name: CI
+
+# Typecheck, test and build on every PR and every push to main. The tests boot
+# the built bundle in jsdom, so the build has to run here even though nothing is
+# published: a change that compiles but breaks the page fails this job.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            docs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The editor tests import the docs site's generator, so a docs-only change
+      # that breaks the generated config fails here rather than in someone's deploy.
+      - name: Install docs dependencies
+        working-directory: ./docs
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Build docs
+        working-directory: ./docs
+        run: npm run build

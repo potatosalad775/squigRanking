@@ -1,0 +1,17 @@
+/* Tokens for the config editor. Everything is expressed against Starlight's own
+   palette so the tool follows the site's light and dark themes without a second
+   theme system of its own. */
+:root {
+	--ce-gap: 1rem;
+	--ce-radius: 0.5rem;
+	--ce-border: var(--sl-color-gray-5);
+	--ce-surface: var(--sl-color-black);
+	--ce-muted: var(--sl-color-gray-2);
+}
+
+/* Starlight's prose rules add a top margin to every element that follows a
+   sibling, which pushes buttons in a row onto separate lines. `.not-content`
+   opts the tool out; this block only carries the tokens. */
+.ce-root {
+	margin-top: 1.5rem;
+}

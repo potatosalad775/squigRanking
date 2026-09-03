@@ -1,0 +1,44 @@
+---
+title: 'squigRanking'
+description: 'A static, config-driven ranking page for CrinGraph and modernGraphTool squigs. Your reviews live in a spreadsheet; the page reads it.'
+template: splash
+hero:
+  tagline: 'Your reviews live in a spreadsheet. The page reads it, and nothing else has to change.'
+  actions:
+    - text: Quick start
+      link: /squigRanking/docs/setup/quick-start/
+      icon: right-arrow
+    - text: Build a config
+      link: /squigRanking/docs/config-editor/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+	<Card title="Four files, no build step" icon="document">
+		The page is plain HTML, CSS and one script. Drop it beside your existing
+		measurement site and edit one config file. There is nothing to install on
+		the server and nothing to compile.
+	</Card>
+	<Card title="A spreadsheet is the database" icon="list-format">
+		Each part of a review is its own column: comment, pros, cons, notes, tags.
+		No markup to learn, no ordering rule to remember. A blank cell renders
+		nothing.
+	</Card>
+	<Card title="One list defines a rank" icon="star">
+		Grades, their colors, their order and what each is worth live in a single
+		`scale` list. Letter grades, five stars and numeric scores all ship ready
+		to copy.
+	</Card>
+	<Card title="Links both ways" icon="external">
+		Review-score badges in CrinGraph and modernGraphTool link into the matching
+		card, and every card links back to the measurement.
+	</Card>
+</CardGrid>
+
+## Where to start
+
+- **Never set this up before?** [Quick start](/squigRanking/docs/setup/quick-start/) gets a page live in about fifteen minutes.
+- **Picking how to grade?** [Choosing a rank style](/squigRanking/docs/ranks/choosing/) compares letters, stars and scores.
+- **Editing the config?** The [config editor](/squigRanking/docs/config-editor/) builds the file for you, with a live preview.

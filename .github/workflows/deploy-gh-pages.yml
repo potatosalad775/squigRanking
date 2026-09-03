@@ -1,0 +1,77 @@
+name: Deploy to GitHub Pages
+
+# Publishes two things from one artifact: the live demo page at the site root,
+# and the docs site under /docs. The demo is the built deploy bundle itself, so
+# what visitors see is exactly what they download.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            docs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the deploy bundle
+        run: npm run build
+
+      - name: Prepare the artifact directory
+        run: mkdir -p gh-pages-artifact
+
+      # The demo runs against the template sheet. Its measurement links resolve
+      # against ../data/phone_book.json, which does not exist here, so those links
+      # stay hidden — the page is built to do that rather than show dead links.
+      - name: Stage the demo page
+        run: |
+          cp -r dist/* gh-pages-artifact/
+          rm -f gh-pages-artifact/*.map
+          touch gh-pages-artifact/.nojekyll
+          ls -A gh-pages-artifact
+
+      - name: Build the docs site
+        working-directory: ./docs
+        run: |
+          npm ci
+          npm run build
+          ls -A dist
+
+      - name: Stage the docs site
+        run: |
+          mkdir -p gh-pages-artifact/docs
+          cp -r docs/dist/* gh-pages-artifact/docs/
+          ls -A gh-pages-artifact/docs
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages-artifact
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy: demo page and docs'

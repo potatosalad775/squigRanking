@@ -1,0 +1,24 @@
+{
+  "name": "squig-ranking-docs",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.36.0",
+    "@astrojs/svelte": "^7.1.0",
+    "astro": "^5.13.0",
+    "sharp": "^0.34.0",
+    "svelte": "^5.38.0"
+  }
+}

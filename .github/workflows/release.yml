@@ -1,0 +1,77 @@
+name: Release
+
+# Builds the deploy bundle and attaches it to a GitHub Release as a zip. This is
+# the download the docs point operators at, so it must contain exactly the files
+# DEPLOY.txt describes and nothing else.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: 'Version override (defaults to package.json version)'
+        required: false
+        type: string
+      release_notes:
+        description: 'Additional release notes (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version_override }}" ]; then
+            VERSION="${{ github.event.inputs.version_override }}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Build and verify
+        run: npm run check
+
+      - name: Package the deploy bundle
+        run: |
+          STAGE="squigRanking-${{ steps.version.outputs.version }}"
+          mkdir -p "$STAGE"
+          cp -r dist/* "$STAGE"/
+          rm -f "$STAGE"/*.map
+          zip -r "$STAGE.zip" "$STAGE"
+          unzip -l "$STAGE.zip"
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: |
+            Download the zip, copy `index.html`, `style.css`, `core.js` and
+            `ranking-config.js` into your `ranking/` folder, then point
+            `ranking-config.js` at your published sheet.
+
+            Other rank styles are in `presets/`. Setup guide:
+            https://potatosalad775.github.io/squigRanking/docs/setup/quick-start/
+
+            ${{ github.event.inputs.release_notes }}
+          files: squigRanking-${{ steps.version.outputs.version }}.zip
+          generate_release_notes: true

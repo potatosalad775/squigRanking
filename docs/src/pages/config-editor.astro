@@ -1,0 +1,23 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ConfigEditor from '../components/config-editor/ConfigEditor.svelte';
+---
+
+<StarlightPage
+	frontmatter={{
+		title: 'Config editor',
+		description:
+			'Build a ranking-config.js from a form. Pick a rank style, describe your sheet, and copy the finished file.',
+		template: 'splash',
+		tableOfContents: false,
+	}}
+>
+	{/*
+		`.not-content` opts out of Starlight's prose spacing, which would otherwise
+		put every button in a row on its own line. `template: 'splash'` already
+		renders the <h1>, so there is no heading here.
+	*/}
+	<div class="ce-root not-content">
+		<ConfigEditor client:load />
+	</div>
+</StarlightPage>
