@@ -26,6 +26,8 @@ cp presets/stars/TEMPLATE.csv TEMPLATE.csv
 
 Then put your sheet URL back into the new config, because each preset ships pointing at the demo sheet.
 
+Each preset also has a `TEMPLATE.xlsx` next to its CSV, with the rank dropdown, the guide and the chart already set to that scale.
+
 If you already have rows written against a different scale, translate the Rank column too. A value that is not on the scale shows no badge and sinks to the bottom of the list, which is deliberate: a typo should be visible rather than silently sorted somewhere plausible.
 
 ## Half steps and decimals

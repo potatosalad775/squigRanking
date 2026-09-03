@@ -14,6 +14,7 @@ The ranking page reads its data from a CSV source (typically a published Google 
 
 - **Google Sheets template** — copy [this template spreadsheet](https://docs.google.com/spreadsheets/d/1YIXLswsOCEt-p0UWrP9_64n-xl5qC_fV-s0MThXeEDk/edit?usp=sharing) and edit it as your own. (Use `File → Make a copy` to create your own copy in your drive.)
 - **Self-hosted CSV** — if you'd rather host the CSV yourself, use [TEMPLATE.csv](TEMPLATE.csv) as a starting point.
+- **Excel workbook** — [TEMPLATE.xlsx](TEMPLATE.xlsx) is the same sheet with a rank dropdown, a Guide tab explaining every column, and a Stats tab that counts and charts your grades. Import it into Google Sheets with `File → Import`, or edit it locally.
 
 ### Pick a rank style
 
@@ -129,6 +130,16 @@ Both integrations default to no-op when the knob is unset, so existing deploys s
 ---
 
 ## Development
+
+The spreadsheet templates are generated from the preset configs, so a grade renamed in a config does not leave a workbook behind:
+
+```bash
+pip install openpyxl
+python scripts/build-templates.py           # rebuild every TEMPLATE.xlsx
+python scripts/build-templates.py --check   # what CI runs
+```
+
+Python is needed to rebuild them, never to use them. The generated files are committed.
 
 ```bash
 npm install

@@ -9,7 +9,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
 
 /** Files copied verbatim into the deploy bundle. */
-const STATIC_FILES = ['index.html', 'style.css', 'ranking-config.js', 'TEMPLATE.csv'];
+const STATIC_FILES = [
+  'index.html', 'style.css', 'ranking-config.js', 'TEMPLATE.csv', 'TEMPLATE.xlsx',
+];
 
 mkdirSync(dist, { recursive: true });
 for (const name of STATIC_FILES) {
@@ -24,7 +26,7 @@ const presets = readdirSync(presetsRoot, { withFileTypes: true })
   .map(entry => entry.name);
 for (const preset of presets) {
   mkdirSync(join(dist, 'presets', preset), { recursive: true });
-  for (const name of ['ranking-config.js', 'TEMPLATE.csv']) {
+  for (const name of ['ranking-config.js', 'TEMPLATE.csv', 'TEMPLATE.xlsx']) {
     copyFileSync(join(presetsRoot, preset, name), join(dist, 'presets', preset, name));
   }
 }

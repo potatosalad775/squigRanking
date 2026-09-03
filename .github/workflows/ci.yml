@@ -57,3 +57,30 @@ jobs:
       - name: Build docs
         working-directory: ./docs
         run: npm run build
+
+  templates:
+    name: Spreadsheet templates
+    runs-on: ubuntu-latest
+
+    # The .xlsx templates are generated from the preset configs but nothing in
+    # the Node build touches them, so this is the only thing standing between a
+    # renamed grade and a workbook that silently disagrees with the page.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install openpyxl
+        run: pip install openpyxl
+
+      - name: Check the templates match their presets
+        run: python scripts/build-templates.py --check

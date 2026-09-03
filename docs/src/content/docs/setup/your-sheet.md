@@ -23,6 +23,18 @@ Each part of a review lives in its own column. There is no markup to learn and n
 
 `Score` is optional because a rank scale can say what each grade is worth. A sheet with only `Brand`, `Model` and `Rank` still sorts by score and still shows an average. See [How a scale works](/squigRanking/docs/ranks/scale/).
 
+## What is in the workbook
+
+If you started from the spreadsheet template rather than a bare CSV, it has three tabs.
+
+**List** is where you type. The header row is frozen, the Rank column is a dropdown so you cannot invent a grade by accident, and each grade colors its own cell the way it will look on the page.
+
+**Guide** holds the scale: every grade, what it is worth, and its color. The Score column and the Stats tab both read this table, so adding a grade here adds it everywhere in the workbook at once. Below the table is a description of each column and the publishing steps, so the sheet explains itself without this page open.
+
+**Stats** counts your devices per grade, works out the average, and charts it. Nothing to maintain; the formulas cover a thousand rows.
+
+Adding a grade to the sheet does not add it to the page. The `scale` in your config is what the page reads, so change both. The [config editor](/squigRanking/docs/config-editor/) is the easy way to keep them lined up.
+
 ## Line breaks are preserved
 
 Put each bullet on its own line inside the cell. In Google Sheets that is **Alt+Enter** (**Option+Enter** on a Mac). The page renders those breaks exactly as you typed them, so a Pros cell reading
