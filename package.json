@@ -1,0 +1,53 @@
+{
+  "name": "squig-ranking",
+  "version": "1.0.0",
+  "description": "Static, config-driven ranking page for CrinGraph / modernGraphTool squig deployments.",
+  "type": "module",
+  "types": "./dist/types.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/core.js"
+    },
+    "./core.js": "./dist/core.js",
+    "./core.min.js": "./dist/core.min.js",
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "presets",
+    "README.md",
+    "CONFIGURATION.md"
+  ],
+  "scripts": {
+    "build": "rolldown -c && tsc -p tsconfig.build.json && node scripts/bundle.mjs",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run test && npm run build",
+    "prepublishOnly": "npm run check"
+  },
+  "keywords": [
+    "squiglink",
+    "cringraph",
+    "moderngraphtool",
+    "ranking",
+    "iem",
+    "headphones"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jsdom": "^30.0.0",
+    "jsdom": "^30.0.1",
+    "rolldown": "^1.0.0-beta.24",
+    "typescript": "^5.7.0"
+  },
+  "sideEffects": [
+    "./dist/core.js",
+    "./dist/core.min.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OWNER/squigRanking.git"
+  }
+}

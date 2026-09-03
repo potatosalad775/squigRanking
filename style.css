@@ -235,13 +235,8 @@ select, input {
   border-radius: 12px;
   box-shadow: var(--color-shadow);
 }
-.comment-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-weight: 400;
-}
-.comment-extra, .comment-down, .comment-up, .comment-question {
+/* Card body blocks (one column per section: Comment, Pros, Cons, Notes) */
+.card-block {
   display: flex;
   flex-direction: row;
   align-items: start;
@@ -249,47 +244,51 @@ select, input {
   gap: 0.25rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  svg {
-    width: 0.75rem; height: 1.25rem;
-  }
 }
-.comment-asterisk {
+.card-block svg {
+  width: 0.75rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+.card-block-plain {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.card-block-up,
+.card-block-down {
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  margin: 0.125rem 0;
+}
+.card-block-up {
+  background: var(--color-upvote);
+  color: var(--color-onUpvote);
+}
+.card-block-down {
+  background: var(--color-downvote);
+  color: var(--color-onDownvote);
+}
+.card-block-note,
+.card-block-muted {
+  color: var(--color-text-muted);
+}
+.card-block-label {
+  font-weight: 600;
+}
+/* Tag pills */
+.card-tags {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   gap: 0.25rem;
   margin-top: 0.25rem;
 }
-.comment-asterisk span {
+.card-tag {
   border: 1px solid var(--color-text-muted);
   border-radius: 0.5rem;
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
   line-height: 1rem;
-  color: var(--color-text-muted);
-}
-.comment-extra {
-  color: var(--color-text-muted);
-}
-.comment-down {
-  background: var(--color-downvote);
-  border-radius: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  margin: 0.125rem 0;
-}
-.comment-down span {
-  color: var(--color-onDownvote);
-}
-.comment-up {
-  background: var(--color-upvote);
-  border-radius: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  margin: 0.125rem 0;
-}
-.comment-up span {
-  color: var(--color-onUpvote);
-}
-.comment-question {
   color: var(--color-text-muted);
 }
 /* Rank color classes */
@@ -343,6 +342,43 @@ select, input {
   color: #fff;
   background: #b71c1c;
 }
+/* Star and numeric rank badges. Both keep .device-card-rank so they land in
+   the same slot as a letter badge, and override only the shape. */
+.device-card-stars {
+  position: relative;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  line-height: 0;
+  white-space: nowrap;
+  background: none;
+  align-self: center;
+}
+.device-card-stars .stars-track,
+.device-card-stars .stars-fill {
+  display: block;
+  line-height: 0;
+  white-space: nowrap;
+}
+.device-card-stars .stars-track {
+  color: var(--color-border);
+}
+.device-card-stars .stars-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  color: #ffb400;
+}
+.device-card-score-badge {
+  width: auto;
+  min-width: 2.5rem;
+  padding: 0 0.5rem;
+  border-radius: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Device Card Styles */
 #device-card-list {
   display: flex;
@@ -409,8 +445,7 @@ select, input {
   min-height: 2.5rem;
   margin-right: 0.3rem;
 }
-.device-card-type,
-.device-card-ff {
+.device-card-chip {
   font-weight: 500;
 }
 .device-card-measurement {
@@ -434,7 +469,12 @@ select, input {
   background: var(--color-accent);
   color: #fff;
 }
-.device-card-comment {
+.device-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
   font-size: 1rem;
   line-height: 1.5rem;
   color: var(--color-text);
@@ -447,12 +487,6 @@ select, input {
 .skeleton-card {
   position: relative;
   overflow: hidden;
-}
-.skeleton-pulse {
-  animation: skeletonPulse 1.4s ease-in-out infinite;
-  background: linear-gradient(90deg, #eceff3 25%, #f5f7fa 37%, #eceff3 63%);
-  background-size: 400% 100%;
-  border-radius: 6px;
 }
 .skeleton-pulse {
   animation: skeletonPulse 1.4s ease-in-out infinite;
@@ -483,7 +517,8 @@ select, input {
   justify-content: center;
   pointer-events: none;
 }
-.stats-modal[style*="display: flex"] {
+.stats-modal.open {
+  pointer-events: auto;
   pointer-events: auto;
 }
 .stats-modal-backdrop {
@@ -771,4 +806,51 @@ select, input {
   30% { box-shadow: 0 0 0 6px rgba(255,204,51,0.35); }
   60% { box-shadow: 0 0 0 3px rgba(255,204,51,0.25); }
   100% { box-shadow: 0 0 0 0 rgba(255,204,51,0); }
+}
+/* Card body column, actions row, and list-level messages */
+.device-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.device-card-chip-sep {
+  color: var(--color-border);
+}
+.device-card-link {
+  font-size: 0.85em;
+  color: var(--color-accent);
+}
+.list-empty,
+.list-error {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 2rem 1rem;
+  margin: 0 auto;
+}
+.list-error {
+  color: var(--color-downvote);
+}
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.stats-modal.open {
+  display: flex;
+}
+.stats-average {
+  text-align: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-pulse,
+  .device-card:target {
+    animation: none;
+  }
+}
+
+/* Elements core.js hides (unmatched measurement links, unset header links).
+   Needed because the rules above set an explicit display value. */
+[hidden] {
+  display: none !important;
 }

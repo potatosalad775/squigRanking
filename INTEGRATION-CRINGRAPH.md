@@ -146,5 +146,5 @@ Notes:
 
 - **`ranking_url` is `undefined`.** Some forks use strict mode; referencing an undeclared identifier throws. The `typeof ranking_url !== 'undefined'` guard in the snippet handles this — don't remove it.
 - **Double-encoding.** If you manually pre-encode inside the template (e.g. `{brand}` → `%20` in the value), the helper will encode again. Use raw placeholders; encoding happens once, in `buildRankingUrl`.
-- **Hash-based templates and history.** Changing only the `#` hash on an existing ranking-page tab triggers `hashchange` and scrolls without reload. The ranking page listens for `hashchange` (see [core.js](core.js)), so this works out of the box.
+- **Hash-based templates and history.** Changing only the `#` hash on an existing ranking-page tab triggers `hashchange` and scrolls without reload. The ranking page listens for `hashchange` (see [src/main.ts](src/main.ts)), so this works out of the box.
 - **Forks without `listAugment.js`.** A few very old CrinGraph variants built the review-score element inline in `graph.js`. Same edit applies — just find the `.href = ...` assignment that produces the existing ranking link.

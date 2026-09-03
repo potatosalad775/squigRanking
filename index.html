@@ -1,6 +1,7 @@
-<meta charset="utf-8">
+<!DOCTYPE html>
 <html lang="en">
 	<head>
+		<meta charset="utf-8">
 		<title>SquigRanking List</title>
 		<link rel="canonical" href=""/>
 		<meta name="description" content="Ranking list of IEM and Headphones."/>
@@ -15,9 +16,12 @@
 		<meta name="mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+		<link rel="preconnect" href="https://cdn.jsdelivr.net">
 		<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
 		<link rel="stylesheet" href="style.css">
+
+		<!-- Config first, then core. Chart.js is loaded on demand by core.js. -->
 		<script defer src="ranking-config.js"></script>
 		<script defer src="core.js"></script>
 	</head>
@@ -28,55 +32,58 @@
 					<span>SquigRanking</span>
 				</div>
 				<div class="header-links">
-					<a id="link-measurements-page" title="Go to Measurements Page" href="../" class="button-like">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+					<a id="link-measurements-page" data-i18n-title="measurementsPage" href="../" class="button-like">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
 							<path d="M22.768125 12.478124999999999c-2.15625 4.59375 -4.03125 6.6468750000000005 -6.076874999999999 6.6468750000000005 -2.59125 0 -4.106249999999999 -3.22875 -5.709375 -6.6468750000000005 -0.6693749999999999 -1.43625 -1.3696875 -2.9156250000000004 -2.083125 -3.9721874999999995C8.2865625 7.6021875 7.7371875 7.125 7.3125 7.125c-0.35812499999999997 0 -1.71 0.38625 -4.0396875 5.353125a1.125 1.125 0 0 1 -2.0371875 -0.9562499999999999c2.15625 -4.59375 4.03125 -6.6468750000000005 6.076874999999999 -6.6468750000000005 2.59125 0 4.106249999999999 3.22875 5.709375 6.6468750000000005 0.6740625 1.43625 1.3696875 2.9203124999999996 2.083125 3.9721874999999995 0.6121875 0.90375 1.1615625 1.3809375 1.59375 1.3809375 0.35812499999999997 0 1.71 -0.38625 4.0396875 -5.353125a1.125 1.125 0 0 1 2.0371875 0.9562499999999999Z"></path>
 						</svg>
 					</a>
-					<button id="toggle-theme" title="Toggle Light/Dark Theme">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+					<button id="toggle-theme" type="button" data-i18n-title="toggleTheme" data-i18n-label="toggleTheme">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
 							<path d="M12 21.9967C6.47715 21.9967 2 17.5196 2 11.9967C2 6.47386 6.47715 1.9967 12 1.9967C17.5228 1.9967 22 6.47386 22 11.9967C22 17.5196 17.5228 21.9967 12 21.9967ZM12 19.9967C16.4183 19.9967 20 16.415 20 11.9967C20 7.57843 16.4183 3.9967 12 3.9967C7.58172 3.9967 4 7.57843 4 11.9967C4 16.415 7.58172 19.9967 12 19.9967ZM7.00035 15.316C9.07995 15.1646 11.117 14.2939 12.7071 12.7038C14.2972 11.1137 15.1679 9.07666 15.3193 6.99706C15.6454 7.21408 15.955 7.46642 16.2426 7.75406C18.5858 10.0972 18.5858 13.8962 16.2426 16.2393C13.8995 18.5825 10.1005 18.5825 7.75736 16.2393C7.46971 15.9517 7.21738 15.6421 7.00035 15.316Z"></path>
 						</svg>
 					</button>
-					<button id="toggle-language" title="Toggle Language (EN/KR)">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+					<button id="toggle-language" type="button" data-i18n-title="toggleLanguage" data-i18n-label="toggleLanguage">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
 							<path d="M18.5 10L22.9 21H20.745L19.544 18H15.454L14.255 21H12.101L16.5 10H18.5ZM10 2V4H16V6L14.0322 6.0006C13.2425 8.36616 11.9988 10.5057 10.4115 12.301C11.1344 12.9457 11.917 13.5176 12.7475 14.0079L11.9969 15.8855C10.9237 15.2781 9.91944 14.5524 8.99961 13.7249C7.21403 15.332 5.10914 16.5553 2.79891 17.2734L2.26257 15.3442C4.2385 14.7203 6.04543 13.6737 7.59042 12.3021C6.46277 11.0281 5.50873 9.57985 4.76742 8.00028L7.00684 8.00037C7.57018 9.03885 8.23979 10.0033 8.99967 10.877C10.2283 9.46508 11.2205 7.81616 11.9095 6.00101L2 6V4H8V2H10ZM17.5 12.8852L16.253 16H18.745L17.5 12.8852Z"></path>
 						</svg>
 					</button>
 				</div>
 			</div>
 			<div class="ranking-header">
-				<div class="toggle-group">
-					<!-- Type toggle buttons rendered by core.js from RANKING_CONFIG.types -->
-				</div>
-				<button id="open-stats-modal" title="open statistics">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2 13H8V21H2V13ZM9 3H15V21H9V3ZM16 8H22V21H16V8Z"></path></svg>
+				<!-- Type toggle buttons are rendered by core.js from RANKING_CONFIG.types -->
+				<div class="toggle-group"></div>
+				<button id="open-stats-modal" type="button" data-i18n-title="openStats" data-i18n-label="openStats">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 13H8V21H2V13ZM9 3H15V21H9V3ZM16 8H22V21H16V8Z"></path></svg>
 				</button>
 			</div>
 		</header>
 		<div class="body-content">
-			<!-- Filter controls rendered by core.js from RANKING_CONFIG.columns -->
+			<!-- Filter controls are rendered by core.js from RANKING_CONFIG.columns -->
 			<div id="filter-controls"></div>
-			<!-- Device cards rendered by core.js -->
+			<!-- Device cards are rendered by core.js -->
 			<div id="device-card-list"></div>
-			<!-- Statistics Modal -->
+
 			<div id="stats-modal" class="stats-modal" role="dialog" aria-modal="true" aria-labelledby="stats-modal-title" tabindex="-1">
 				<div class="stats-modal-backdrop"></div>
 				<div class="stats-modal-content" role="document">
-					<button class="stats-modal-close" id="close-stats-modal" aria-label="Close statistics">&times;</button>
-					<h2 id="stats-modal-title">Ranking Statistics</h2>
+					<button class="stats-modal-close" type="button" id="close-stats-modal" data-i18n-label="closeStats">&times;</button>
+					<h2 id="stats-modal-title" data-i18n="statsTitle">Ranking Statistics</h2>
 					<div class="chart-container"><canvas id="rank-bar-chart"></canvas></div>
-					<div><b id="avg-score-label">Average Score:</b> <span id="avg-score">-</span> <span id="avg-score-denominator">/ 5.00</span></div>
+					<div class="stats-average">
+						<b id="avg-score-label" data-i18n="averageScore">Average Score:</b>
+						<span id="avg-score">-</span>
+						<span id="avg-score-denominator"></span>
+					</div>
 				</div>
 			</div>
-			<!-- Scroll to the Top FAB -->
-			<button id="scroll-to-top-btn" title="Scroll to top">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.0001 7.82843V20H11.0001V7.82843L5.63614 13.1924L4.22192 11.7782L12.0001 4L19.7783 11.7782L18.3641 13.1924L13.0001 7.82843Z"></path></svg>
+
+			<button id="scroll-to-top-btn" type="button" data-i18n-title="scrollTop" data-i18n-label="scrollTop">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.0001 7.82843V20H11.0001V7.82843L5.63614 13.1924L4.22192 11.7782L12.0001 4L19.7783 11.7782L18.3641 13.1924L13.0001 7.82843Z"></path></svg>
 			</button>
 		</div>
 		<footer>
 			<div class="footer-top">
-				<span id="footer-text-1">The 'Ranking List' is based on the operator's personal listening experience and subjective evaluation of sound quality.</span>
+				<span id="footer-text-1" data-i18n="footerNote">The 'Ranking List' is based on the operator's personal listening experience and subjective evaluation of sound quality.</span>
 			</div>
 			<hr class="footer-hr" />
 			<div class="footer-bottom">

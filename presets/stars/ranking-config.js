@@ -1,5 +1,6 @@
-// Default ranking-page configuration. Operators edit this file to change
-// schema, filters, sort options, and per-type data sources without touching core.
+// Preset: five stars, in half steps.
+// The Rank column holds a number from 0.5 to 5 and the badge draws the stars.
+// There is no Score column: the scale supplies the numbers.
 // Loaded as a plain <script> before core.js, so window.RANKING_CONFIG is set at parse time.
 //
 // The JSDoc line below gives editors autocomplete and inline validation for the
@@ -39,25 +40,24 @@ window.RANKING_CONFIG = {
 			id: 'rank',
 			source: 'Rank',
 			role: 'rank',
-			label: { default: 'Rank', i18n: { ko: '등급' } },
+			label: { default: 'Rating', i18n: { ko: '평점' } },
 			sortable: true,
-			// The scale is the whole rank definition: order, dropdown options,
-			// badge colors, chart colors, and the score each grade is worth.
-			// Add, remove or recolor a step here and every one of those follows.
+			// Half steps are the whole scale. The badge draws them by clipping a row
+			// of stars, so any fraction works without half-star artwork.
 			scale: [
-				{ value: 'S', score: 5, color: '#6c63ff' },
-				{ value: 'A+', score: 4.5, color: '#00bfae' },
-				{ value: 'A', score: 4, color: '#00bfff' },
-				{ value: 'B+', score: 3.5, color: '#4caf50' },
-				{ value: 'B', score: 3, color: '#8bc34a' },
-				{ value: 'C+', score: 2.5, color: '#ffb347' },
-				{ value: 'C', score: 2, color: '#ffc107' },
-				{ value: 'D+', score: 1.5, color: '#ff9800' },
-				{ value: 'D', score: 1, color: '#ff5722' },
-				{ value: 'F', score: 0, color: '#b71c1c' },
+				{ value: '5', score: 5 },
+				{ value: '4.5', score: 4.5 },
+				{ value: '4', score: 4 },
+				{ value: '3.5', score: 3.5 },
+				{ value: '3', score: 3 },
+				{ value: '2.5', score: 2.5 },
+				{ value: '2', score: 2 },
+				{ value: '1.5', score: 1.5 },
+				{ value: '1', score: 1 },
+				{ value: '0.5', score: 0.5 },
 			],
 			filter: { kind: 'select' },
-			render: { kind: 'rank-badge' },
+			render: { kind: 'stars', max: 5 },
 		},
 		{
 			id: 'title',
@@ -82,9 +82,10 @@ window.RANKING_CONFIG = {
 			filter: { kind: 'text' },
 			render: { kind: 'none' },
 		},
+		// No Score column in the sheet: the rank scale supplies the number used
+		// by the score sort and the average readout.
 		{
 			id: 'score',
-			source: 'Score',
 			role: 'score',
 			label: { default: 'Score', i18n: { ko: '점수' } },
 			sortable: true,
@@ -162,8 +163,8 @@ window.RANKING_CONFIG = {
 			'model-asc', 'model-desc',
 		],
 		labels: {
-			'rank-asc': { default: 'Rank (Best First)', i18n: { ko: '등급순 (높은 순)' } },
-			'rank-desc': { default: 'Rank (Worst First)', i18n: { ko: '등급순 (낮은 순)' } },
+			'rank-asc': { default: 'Rating (Best First)', i18n: { ko: '평점 (높은 순)' } },
+			'rank-desc': { default: 'Rating (Worst First)', i18n: { ko: '평점 (낮은 순)' } },
 			'score-desc': { default: 'Score (High to Low)', i18n: { ko: '점수순 (높은 순)' } },
 			'score-asc': { default: 'Score (Low to High)', i18n: { ko: '점수순 (낮은 순)' } },
 		},

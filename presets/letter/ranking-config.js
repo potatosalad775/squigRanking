@@ -1,5 +1,6 @@
-// Default ranking-page configuration. Operators edit this file to change
-// schema, filters, sort options, and per-type data sources without touching core.
+// Preset: letter grades, S through F.
+// The `scale` on the rank column is the only place the grades are defined:
+// it sets the order, the dropdown, the badge colors, the chart, and the scores.
 // Loaded as a plain <script> before core.js, so window.RANKING_CONFIG is set at parse time.
 //
 // The JSDoc line below gives editors autocomplete and inline validation for the
