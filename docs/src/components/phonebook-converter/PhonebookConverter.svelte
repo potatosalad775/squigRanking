@@ -89,7 +89,9 @@
 	}
 
 	async function fetchUrl(): Promise<void> {
-		const target = url.trim();
+		const target = (!/^https?:\/\//.test(url.trim()))
+			? `https://${url.trim()}`
+			: url.trim();
 		if (!target) return;
 		loading = true;
 		loadError = '';
