@@ -446,6 +446,13 @@
 		if (simpleExact) return simpleExact.item;
 		return simplified.find((entry) => entry.name !== "" && (entry.name.includes(simpleNeedle) || simpleNeedle.includes(entry.name)))?.item;
 	}
+	/** The terse form expanded, so only one shape reaches the matcher. */
+	function asPhone(entry) {
+		return typeof entry === "string" ? {
+			name: entry,
+			file: entry
+		} : entry;
+	}
 	function findPhone(phones, model) {
 		const direct = findBy(phones, model, (phone) => phone.name ?? "");
 		if (direct) return direct;
@@ -455,10 +462,25 @@
 			return prefix !== "" && prefix.includes(model) || suffix !== "" && suffix.includes(model);
 		});
 	}
-	/** The first measurement filename for a phonebook entry. */
+	/**
+	* The first measurement filename for a phonebook entry.
+	*
+	* `file` wins whenever it is there, because that is the variant both graph tools
+	* draw first. A modernGraphTool phone can declare its measurements only in
+	* `variants[]` or the deprecated `hptfs[]`, and those are read next so such a
+	* device still gets a measurement link instead of silently losing one.
+	*/
 	function phoneFile(phone) {
-		const raw = Array.isArray(phone.file) ? phone.file[0] : phone.file;
-		return String(raw ?? "").trim() || null;
+		const candidates = [
+			Array.isArray(phone.file) ? phone.file[0] : phone.file,
+			phone.hptfs?.[0]?.files?.[0],
+			phone.variants?.[0]?.file ?? phone.variants?.[0]?.samples?.files?.[0]
+		];
+		for (const candidate of candidates) {
+			const trimmed = String(candidate ?? "").trim();
+			if (trimmed) return trimmed;
+		}
+		return null;
 	}
 	/**
 	* Resolve a brand and model to a measurement URL, or null when the phonebook
@@ -471,7 +493,7 @@
 		if (!brandKey || !modelKey) return null;
 		const matchedBrand = findBy(phonebook, brandKey, (entry) => entry.name ?? "");
 		if (!matchedBrand) return null;
-		const matchedPhone = findPhone(matchedBrand.phones ?? [], modelKey);
+		const matchedPhone = findPhone((matchedBrand.phones ?? []).map(asPhone), modelKey);
 		if (!matchedPhone) return null;
 		const file = phoneFile(matchedPhone);
 		if (!file) return null;
