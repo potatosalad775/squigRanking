@@ -87,6 +87,13 @@ function sortValue(row: Row, column: ColumnConfig, lang: Lang, rankIndex: (v: st
   return { missing: false, value: raw.toLowerCase() };
 }
 
+/**
+ * One collator for the whole page. Building one per comparison is what makes
+ * `localeCompare` expensive, and a sort of a few hundred rows calls this a few
+ * thousand times.
+ */
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
 /** Compare two sort values. Missing values always sink, whichever direction. */
 function compare(a: SortValue, b: SortValue, direction: 1 | -1): number {
   if (a.missing && b.missing) return 0;
@@ -95,8 +102,7 @@ function compare(a: SortValue, b: SortValue, direction: 1 | -1): number {
   if (typeof a.value === 'number' && typeof b.value === 'number') {
     return (a.value - b.value) * direction;
   }
-  const result = String(a.value).localeCompare(String(b.value), undefined, { numeric: true, sensitivity: 'base' });
-  return result * direction;
+  return collator.compare(String(a.value), String(b.value)) * direction;
 }
 
 /** Split `'rank-asc'` into a column id and a direction. */
@@ -118,32 +124,36 @@ export function sortRows(rows: Row[], sortKey: string, lang: Lang): Row[] {
   const tiebreakers = ['rank', 'brand', 'model']
     .map(role => getRoleColumn(role as 'rank' | 'brand' | 'model'))
     .filter((c): c is ColumnConfig => Boolean(c) && c!.id !== primary?.id);
+  const ordered = primary ? [primary, ...tiebreakers] : tiebreakers;
 
-  return [...rows].sort((a, b) => {
-    if (primary) {
-      const result = compare(
-        sortValue(a, primary, lang, rankIndex),
-        sortValue(b, primary, lang, rankIndex),
-        direction,
-      );
-      if (result !== 0) return result;
-    }
-    for (const column of tiebreakers) {
-      const result = compare(
-        sortValue(a, column, lang, rankIndex),
-        sortValue(b, column, lang, rankIndex),
-        1,
-      );
-      if (result !== 0) return result;
+  // Sort keys are derived once per row rather than inside the comparator. A
+  // comparison sort asks for the same row's value O(log n) times, and deriving
+  // it is the expensive half: a score column resolves through the rank scale,
+  // and a templated title re-interpolates the whole row.
+  const keyed = rows.map(row => ({
+    row,
+    keys: ordered.map(column => sortValue(row, column, lang, rankIndex)),
+  }));
+
+  keyed.sort((a, b) => {
+    for (let i = 0; i < ordered.length; i++) {
+      // Only the primary column follows the requested direction; the
+      // tiebreakers always read ascending.
+      const step = compare(a.keys[i]!, b.keys[i]!, i === 0 && primary ? direction : 1);
+      if (step !== 0) return step;
     }
     return 0;
   });
+
+  return keyed.map(entry => entry.row);
 }
 
 export function filterAndSort(
   rows: Row[], type: string | null, state: FilterState, lang: Lang,
 ): Row[] {
   const columns = visibleColumns(type).filter(c => c.filter);
-  const filtered = rows.filter(row => matchesFilters(row, columns, state, lang));
+  const filtered = state.search || columns.some(c => state.columns[c.id])
+    ? rows.filter(row => matchesFilters(row, columns, state, lang))
+    : rows;
   return sortRows(filtered, state.sort, lang);
 }

@@ -42,27 +42,58 @@ export async function loadPhonebook(url: string): Promise<Phonebook | null> {
   }
 }
 
-/** Ordered match strategies, strictest first. */
-function findBy<T>(items: T[], needle: string, nameOf: (item: T) => string): T | undefined {
-  if (!needle) return undefined;
-  const normalized = items.map(item => ({ item, name: normalize(nameOf(item)) }));
-  const exact = normalized.find(entry => entry.name === needle);
-  if (exact) return exact.item;
+/**
+ * A phonebook, pre-keyed for matching.
+ *
+ * Matching is a cascade of four passes over every candidate name, and the page
+ * resolves one link per row on every render. Normalizing those names on each
+ * call made the cost of a keystroke the product of the row count and the
+ * phonebook size. The names are derived from data that does not change once
+ * fetched, so they are derived once and kept beside it.
+ *
+ * The index hangs off the phonebook in a WeakMap: it disappears with the
+ * phonebook, and a caller that mutates a phonebook in place gets a stale index.
+ * Nothing here does; `loadPhonebook` hands out a fresh parse.
+ */
+interface Indexed<T> {
+  item: T;
+  /** Lowercased, whitespace-collapsed. The first two passes compare on this. */
+  normalized: string;
+  /** Alphanumerics only. The last two passes compare on this. */
+  simplified: string;
+}
 
-  const contains = normalized.find(
-    entry => entry.name !== '' && (entry.name.includes(needle) || needle.includes(entry.name)),
-  );
-  if (contains) return contains.item;
+interface PhoneIndex extends Indexed<PhonebookPhone> {
+  prefix: string;
+  suffix: string;
+}
 
-  const simpleNeedle = simplify(needle);
-  if (!simpleNeedle) return undefined;
-  const simplified = items.map(item => ({ item, name: simplify(nameOf(item)) }));
-  const simpleExact = simplified.find(entry => entry.name === simpleNeedle);
-  if (simpleExact) return simpleExact.item;
+interface BrandIndex extends Indexed<PhonebookBrand> {
+  /** Built the first time this brand is matched, not for the whole book up front. */
+  phones?: PhoneIndex[];
+}
 
-  return simplified.find(
-    entry => entry.name !== '' && (entry.name.includes(simpleNeedle) || simpleNeedle.includes(entry.name)),
-  )?.item;
+interface PhonebookIndex {
+  brands: BrandIndex[];
+  /** `${brandKey}\u0000${modelKey}` -> measurement filename, or null for a miss. */
+  files: Map<string, string | null>;
+}
+
+const indexes = new WeakMap<Phonebook, PhonebookIndex>();
+
+function indexOf(phonebook: Phonebook): PhonebookIndex {
+  let index = indexes.get(phonebook);
+  if (index) return index;
+  index = {
+    brands: phonebook.map(brand => ({
+      item: brand,
+      normalized: normalize(brand.name),
+      simplified: simplify(brand.name),
+    })),
+    files: new Map(),
+  };
+  indexes.set(phonebook, index);
+  return index;
 }
 
 /** The terse form expanded, so only one shape reaches the matcher. */
@@ -70,15 +101,50 @@ function asPhone(entry: PhonebookEntry): PhonebookPhone {
   return typeof entry === 'string' ? { name: entry, file: entry } : entry;
 }
 
-function findPhone(phones: PhonebookPhone[], model: string): PhonebookPhone | undefined {
-  const direct = findBy(phones, model, phone => phone.name ?? '');
-  if (direct) return direct;
-  // Some phonebooks split the display name across prefix and suffix fields.
-  return phones.find(phone => {
-    const prefix = normalize(phone.prefix);
-    const suffix = normalize(phone.suffix);
-    return (prefix !== '' && prefix.includes(model)) || (suffix !== '' && suffix.includes(model));
+function phonesOf(brand: BrandIndex): PhoneIndex[] {
+  if (brand.phones) return brand.phones;
+  brand.phones = (brand.item.phones ?? []).map(entry => {
+    const phone = asPhone(entry);
+    return {
+      item: phone,
+      normalized: normalize(phone.name),
+      simplified: simplify(phone.name),
+      prefix: normalize(phone.prefix),
+      suffix: normalize(phone.suffix),
+    };
   });
+  return brand.phones;
+}
+
+/** Ordered match strategies, strictest first. Returns the index entry, not the item. */
+function findBy<E extends Indexed<unknown>>(entries: E[], needle: string): E | undefined {
+  if (!needle) return undefined;
+  for (const entry of entries) if (entry.normalized === needle) return entry;
+
+  for (const entry of entries) {
+    const name = entry.normalized;
+    if (name !== '' && (name.includes(needle) || needle.includes(name))) return entry;
+  }
+
+  const simpleNeedle = simplify(needle);
+  if (!simpleNeedle) return undefined;
+  for (const entry of entries) if (entry.simplified === simpleNeedle) return entry;
+
+  for (const entry of entries) {
+    const name = entry.simplified;
+    if (name !== '' && (name.includes(simpleNeedle) || simpleNeedle.includes(name))) return entry;
+  }
+  return undefined;
+}
+
+function findPhone(phones: PhoneIndex[], model: string): PhonebookPhone | undefined {
+  const direct = findBy(phones, model);
+  if (direct) return direct.item;
+  // Some phonebooks split the display name across prefix and suffix fields.
+  return phones.find(
+    phone => (phone.prefix !== '' && phone.prefix.includes(model))
+      || (phone.suffix !== '' && phone.suffix.includes(model)),
+  )?.item;
 }
 
 /**
@@ -114,14 +180,23 @@ export function resolveMeasurementUrl(
   const modelKey = normalize(model);
   if (!brandKey || !modelKey) return null;
 
-  const matchedBrand = findBy(phonebook, brandKey, entry => entry.name ?? '');
-  if (!matchedBrand) return null;
-
-  const matchedPhone = findPhone((matchedBrand.phones ?? []).map(asPhone), modelKey);
-  if (!matchedPhone) return null;
-
-  const file = phoneFile(matchedPhone);
+  // Cached on the filename rather than the finished URL, so two types pointing
+  // at the same phonebook with different templates still share the matching.
+  const index = indexOf(phonebook);
+  const cacheKey = `${brandKey}\u0000${modelKey}`;
+  let file = index.files.get(cacheKey);
+  if (file === undefined) {
+    file = matchFile(index, brandKey, modelKey);
+    index.files.set(cacheKey, file);
+  }
   if (!file) return null;
 
   return template.replace('{file}', encodeURIComponent(file.replace(/\s+/g, '_')));
+}
+
+function matchFile(index: PhonebookIndex, brandKey: string, modelKey: string): string | null {
+  const brand = findBy(index.brands, brandKey);
+  if (!brand) return null;
+  const matchedPhone = findPhone(phonesOf(brand), modelKey);
+  return matchedPhone ? phoneFile(matchedPhone) : null;
 }

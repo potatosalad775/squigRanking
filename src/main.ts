@@ -116,6 +116,9 @@ async function resolveMeasurementLinks(rows: Row[]): Promise<void> {
     const card = document.getElementById(buildCardId(row));
     const link = card?.querySelector<HTMLAnchorElement>('.device-card-measurement');
     if (!link) continue;
+    // Cards are reused across renders, so a link resolved on an earlier pass is
+    // already correct. Only the ones still hidden need looking up.
+    if (!link.hidden) continue;
     const href = resolveMeasurementUrl(
       phonebook,
       columnValue(row, brandColumn, state.lang),

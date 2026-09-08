@@ -10,9 +10,41 @@ const EMPTY: RankingConfig = { types: {}, columns: [] };
 
 let config: RankingConfig = EMPTY;
 
+/**
+ * Derived lookups, memoized.
+ *
+ * A config is installed once and then read on every render: filtering, sorting
+ * and card building all walk `columns` per row. Nothing here mutates the config
+ * after `setConfig`, so every derivation of it is stable until the next call,
+ * and the whole cache is dropped there.
+ *
+ * Cached arrays are shared, not copied. Treat what these return as read-only.
+ */
+interface DerivedCache {
+  roleColumns: Map<ColumnRole, ColumnConfig | undefined>;
+  visibleColumns: Map<string | null, ColumnConfig[]>;
+  searchFields: Map<Lang, string[]>;
+  rankIndex: Map<string, number>;
+  rankScale?: RankScaleEntry[];
+  /** `undefined` means "not computed yet"; `null` means "not a numeric scale". */
+  numericScale?: number[] | null;
+}
+
+function emptyCache(): DerivedCache {
+  return {
+    roleColumns: new Map(),
+    visibleColumns: new Map(),
+    searchFields: new Map(),
+    rankIndex: new Map(),
+  };
+}
+
+let cache: DerivedCache = emptyCache();
+
 /** Install the operator config. Called once at startup. */
 export function setConfig(next: RankingConfig | undefined): void {
   config = next ?? EMPTY;
+  cache = emptyCache();
   // Only a config from the future is a problem. Older configs keep working,
   // so bumping the schema must not fill every existing deploy's console.
   const declared = config.configVersion;
@@ -51,12 +83,21 @@ export function getColumn(id: string): ColumnConfig | undefined {
 
 /** The column carrying a semantic role, e.g. the rank column used for badge order. */
 export function getRoleColumn(role: ColumnRole): ColumnConfig | undefined {
-  return getColumns().find(c => c.role === role);
+  if (cache.roleColumns.has(role)) return cache.roleColumns.get(role);
+  const found = getColumns().find(c => c.role === role);
+  cache.roleColumns.set(role, found);
+  return found;
 }
 
 /** Columns applicable to a type, honoring `showForTypes`. */
 export function visibleColumns(type: string | null): ColumnConfig[] {
-  return getColumns().filter(c => !c.showForTypes || (type !== null && c.showForTypes.includes(type)));
+  const hit = cache.visibleColumns.get(type);
+  if (hit) return hit;
+  const columns = getColumns().filter(
+    c => !c.showForTypes || (type !== null && c.showForTypes.includes(type)),
+  );
+  cache.visibleColumns.set(type, columns);
+  return columns;
 }
 
 /**
@@ -67,7 +108,14 @@ export function visibleColumns(type: string | null): ColumnConfig[] {
  * their dropdown, and their chart, just without colors or scores.
  */
 export function getRankScale(): RankScaleEntry[] {
+  if (cache.rankScale) return cache.rankScale;
   const col = getRoleColumn('rank');
+  const scale = buildRankScale(col);
+  cache.rankScale = scale;
+  return scale;
+}
+
+function buildRankScale(col: ColumnConfig | undefined): RankScaleEntry[] {
   if (!col) return [];
   if (col.scale?.length) return col.scale;
   if (col.filter?.kind === 'select' && col.filter.values?.length) {
@@ -83,10 +131,12 @@ export function getRankValues(): string[] {
 
 /** The scale as numbers, or null when any step is not numeric. */
 function numericScale(): number[] | null {
+  if (cache.numericScale !== undefined) return cache.numericScale;
   const scale = getRankScale();
-  if (scale.length < 2) return null;
-  const numbers = scale.map(entry => Number.parseFloat(entry.value));
-  return numbers.every(n => !Number.isNaN(n)) ? numbers : null;
+  const numbers = scale.length < 2 ? null : scale.map(entry => Number.parseFloat(entry.value));
+  const result = numbers && numbers.every(n => !Number.isNaN(n)) ? numbers : null;
+  cache.numericScale = result;
+  return result;
 }
 
 /**
@@ -99,6 +149,14 @@ function numericScale(): number[] | null {
 export function rankIndexOf(value: string | undefined | null): number {
   const key = compareKey(value);
   if (!key) return -1;
+  const hit = cache.rankIndex.get(key);
+  if (hit !== undefined) return hit;
+  const index = computeRankIndex(key);
+  cache.rankIndex.set(key, index);
+  return index;
+}
+
+function computeRankIndex(key: string): number {
   const scale = getRankScale();
   const exact = scale.findIndex(entry => compareKey(entry.value) === key);
   if (exact !== -1) return exact;
@@ -210,6 +268,14 @@ export function compareKey(value: string | undefined | null): string {
 
 /** CSV headers the free-text search covers, defaulting to every declared source. */
 export function searchFields(lang: Lang): string[] {
+  const hit = cache.searchFields.get(lang);
+  if (hit) return hit;
+  const fields = buildSearchFields(lang);
+  cache.searchFields.set(lang, fields);
+  return fields;
+}
+
+function buildSearchFields(lang: Lang): string[] {
   const declared = config.search?.fields;
   if (declared?.length) return declared;
   const fields = new Set<string>();

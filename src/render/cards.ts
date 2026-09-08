@@ -201,16 +201,41 @@ export function renderCard(row: Row, columns: ColumnConfig[], lang: Lang): HTMLE
   return card;
 }
 
+/**
+ * Cards already built, keyed by the row object they were built from.
+ *
+ * A card is a pure function of its row, its columns and the language, and rows
+ * keep their identity for as long as a type is loaded. Filtering and sorting
+ * therefore only need to reorder existing nodes, not rebuild a few hundred of
+ * them on every keystroke. It also means a measurement link that the phonebook
+ * resolved survives the next render instead of being thrown away and refetched.
+ *
+ * `columns` comes from the memoized `visibleColumns`, so its identity is stable
+ * per type and changes exactly when the cards would have to be rebuilt anyway.
+ */
+let cache: { lang: Lang; columns: ColumnConfig[]; byRow: WeakMap<Row, HTMLElement> } | null = null;
+
 /** Replace the card list with the given rows, or a message when empty. */
 export function renderCards(
   container: HTMLElement, rows: Row[], columns: ColumnConfig[], lang: Lang,
 ): void {
-  container.replaceChildren();
   if (!rows.length) {
-    container.appendChild(el('p', { class: 'list-empty', text: t('noResults', lang) }));
+    container.replaceChildren(el('p', { class: 'list-empty', text: t('noResults', lang) }));
     return;
   }
+  if (!cache || cache.lang !== lang || cache.columns !== columns) {
+    cache = { lang, columns, byRow: new WeakMap() };
+  }
   const fragment = document.createDocumentFragment();
-  for (const row of rows) fragment.appendChild(renderCard(row, columns, lang));
-  container.appendChild(fragment);
+  for (const row of rows) {
+    let card = cache.byRow.get(row);
+    if (!card) {
+      card = renderCard(row, columns, lang);
+      cache.byRow.set(row, card);
+    }
+    // Appending a node already in the list moves it, which is what puts the
+    // reused cards into the new order.
+    fragment.appendChild(card);
+  }
+  container.replaceChildren(fragment);
 }
