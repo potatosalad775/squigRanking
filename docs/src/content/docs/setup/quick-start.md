@@ -13,6 +13,10 @@ Open the [template spreadsheet](https://docs.google.com/spreadsheets/d/1YIXLswsO
 
 The copy is yours. Delete the example rows and start typing your own, or keep them while you get the page working and clear them later.
 
+:::tip
+Already have a measurement site? The [phone book converter](/squigRanking/docs/phonebook-converter/) reads its `phone_book.json` and hands you a `Brand` and `Model` row for every device you have measured, so the only thing left to type is the review.
+:::
+
 ## 2. Publish it as CSV
 
 The page reads a published CSV link, not the spreadsheet itself. In your copy:

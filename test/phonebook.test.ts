@@ -13,6 +13,15 @@ const PHONEBOOK: Phonebook = [
   },
   { name: '7Hz / Salnotes', phones: [{ name: 'Zero', file: 'Zero' }] },
   { name: 'Empty', phones: [{ name: 'NoFile' }] },
+  // CrinGraph's terse form: the name is also the filename.
+  { name: 'QBK', phones: ['FQQ', { name: 'Q53', file: 'QBK Q53' }] },
+  {
+    name: 'Sennheiser',
+    phones: [
+      { name: 'HD 600', variants: [{ samples: { files: ['HD600 Leather'] } }] },
+      { name: 'HD 650', hptfs: [{ files: ['HD650 Center', 'HD650 Front'] }] },
+    ],
+  },
 ];
 
 const TEMPLATE = '../?share={file}';
@@ -67,8 +76,23 @@ test('encodes characters that are unsafe in a URL', () => {
   assert.equal(resolveMeasurementUrl(book, 'B', 'M', TEMPLATE), '../?share=a%26b_c');
 });
 
+test('matches a phone listed as a bare name', () => {
+  // Both graph tools read a string entry as "name and filename are the same".
+  assert.equal(resolveMeasurementUrl(PHONEBOOK, 'QBK', 'FQQ', TEMPLATE), '../?share=FQQ');
+  assert.equal(resolveMeasurementUrl(PHONEBOOK, 'QBK', 'Q53', TEMPLATE), '../?share=QBK_Q53');
+});
+
+test('falls back to a measurement declared only as a sample set', () => {
+  // A modernGraphTool phone can keep every measurement in `variants[]`. Without
+  // this the entry matches and then loses its link at the last step.
+  assert.equal(resolveMeasurementUrl(PHONEBOOK, 'Sennheiser', 'HD 600', TEMPLATE), '../?share=HD600_Leather');
+  assert.equal(resolveMeasurementUrl(PHONEBOOK, 'Sennheiser', 'HD 650', TEMPLATE), '../?share=HD650_Center');
+});
+
 test('phoneFile normalizes the file field', () => {
   assert.equal(phoneFile({ file: '  Kato  ' }), 'Kato');
   assert.equal(phoneFile({ file: [] }), null);
   assert.equal(phoneFile({}), null);
+  // `file` still wins: it is the variant both tools draw first.
+  assert.equal(phoneFile({ file: 'Stock', variants: [{ file: 'Modded' }] }), 'Stock');
 });
