@@ -6,11 +6,21 @@
 		columns: []
 	};
 	let config = EMPTY;
+	function emptyCache() {
+		return {
+			roleColumns: /* @__PURE__ */ new Map(),
+			visibleColumns: /* @__PURE__ */ new Map(),
+			searchFields: /* @__PURE__ */ new Map(),
+			rankIndex: /* @__PURE__ */ new Map()
+		};
+	}
+	let cache$1 = emptyCache();
 	/** Install the operator config. Called once at startup. */
 	function setConfig(next) {
 		config = next ?? EMPTY;
+		cache$1 = emptyCache();
 		const declared = config.configVersion;
-		if (declared !== void 0 && declared > 2) console.warn(`[squigRanking] ranking-config.js declares configVersion ${declared}, but this core understands 2. Update core.js.`);
+		if (declared !== void 0 && declared > 3) console.warn(`[squigRanking] ranking-config.js declares configVersion ${declared}, but this core understands 3. Update core.js.`);
 	}
 	function getConfig() {
 		return config;
@@ -33,11 +43,18 @@
 	}
 	/** The column carrying a semantic role, e.g. the rank column used for badge order. */
 	function getRoleColumn(role) {
-		return getColumns().find((c) => c.role === role);
+		if (cache$1.roleColumns.has(role)) return cache$1.roleColumns.get(role);
+		const found = getColumns().find((c) => c.role === role);
+		cache$1.roleColumns.set(role, found);
+		return found;
 	}
 	/** Columns applicable to a type, honoring `showForTypes`. */
 	function visibleColumns(type) {
-		return getColumns().filter((c) => !c.showForTypes || type !== null && c.showForTypes.includes(type));
+		const hit = cache$1.visibleColumns.get(type);
+		if (hit) return hit;
+		const columns = getColumns().filter((c) => !c.showForTypes || type !== null && c.showForTypes.includes(type));
+		cache$1.visibleColumns.set(type, columns);
+		return columns;
 	}
 	/**
 	* The rank column's scale, best first.
@@ -47,7 +64,12 @@
 	* their dropdown, and their chart, just without colors or scores.
 	*/
 	function getRankScale() {
-		const col = getRoleColumn("rank");
+		if (cache$1.rankScale) return cache$1.rankScale;
+		const scale = buildRankScale(getRoleColumn("rank"));
+		cache$1.rankScale = scale;
+		return scale;
+	}
+	function buildRankScale(col) {
 		if (!col) return [];
 		if (col.scale?.length) return col.scale;
 		if (col.filter?.kind === "select" && col.filter.values?.length) return col.filter.values.map((value) => ({ value }));
@@ -59,10 +81,12 @@
 	}
 	/** The scale as numbers, or null when any step is not numeric. */
 	function numericScale() {
+		if (cache$1.numericScale !== void 0) return cache$1.numericScale;
 		const scale = getRankScale();
-		if (scale.length < 2) return null;
-		const numbers = scale.map((entry) => Number.parseFloat(entry.value));
-		return numbers.every((n) => !Number.isNaN(n)) ? numbers : null;
+		const numbers = scale.length < 2 ? null : scale.map((entry) => Number.parseFloat(entry.value));
+		const result = numbers && numbers.every((n) => !Number.isNaN(n)) ? numbers : null;
+		cache$1.numericScale = result;
+		return result;
 	}
 	/**
 	* Position of a cell value in the scale, best first; -1 when it is off-scale.
@@ -74,6 +98,13 @@
 	function rankIndexOf(value) {
 		const key = compareKey(value);
 		if (!key) return -1;
+		const hit = cache$1.rankIndex.get(key);
+		if (hit !== void 0) return hit;
+		const index = computeRankIndex(key);
+		cache$1.rankIndex.set(key, index);
+		return index;
+	}
+	function computeRankIndex(key) {
 		const exact = getRankScale().findIndex((entry) => compareKey(entry.value) === key);
 		if (exact !== -1) return exact;
 		const numbers = numericScale();
@@ -171,6 +202,13 @@
 	}
 	/** CSV headers the free-text search covers, defaulting to every declared source. */
 	function searchFields(lang) {
+		const hit = cache$1.searchFields.get(lang);
+		if (hit) return hit;
+		const fields = buildSearchFields(lang);
+		cache$1.searchFields.set(lang, fields);
+		return fields;
+	}
+	function buildSearchFields(lang) {
 		const declared = config.search?.fields;
 		if (declared?.length) return declared;
 		const fields = /* @__PURE__ */ new Set();
@@ -331,8 +369,7 @@
 			noResults: "No devices match the current filters.",
 			loadError: "Could not load the ranking data. Check the source URL in ranking-config.js.",
 			ascending: "A to Z",
-			descending: "Z to A",
-			footerNote: "The 'Ranking List' is based on the operator's personal listening experience and subjective evaluation of sound quality."
+			descending: "Z to A"
 		},
 		ko: {
 			filterAndSort: "필터 & 정렬",
@@ -352,8 +389,7 @@
 			noResults: "현재 필터 조건에 맞는 기기가 없습니다.",
 			loadError: "랭킹 데이터를 불러오지 못했습니다. ranking-config.js의 소스 URL을 확인하세요.",
 			ascending: "오름차순",
-			descending: "내림차순",
-			footerNote: "'랭킹 리스트'는 운영자의 개인적인 청음 경험과 음질에 대한 주관적 평가를 바탕으로 작성되었습니다."
+			descending: "내림차순"
 		}
 	};
 	/** Languages offered by the toggle, in cycle order. */
@@ -425,26 +461,20 @@
 			return null;
 		}
 	}
-	/** Ordered match strategies, strictest first. */
-	function findBy(items, needle, nameOf) {
-		if (!needle) return void 0;
-		const normalized = items.map((item) => ({
-			item,
-			name: normalize(nameOf(item))
-		}));
-		const exact = normalized.find((entry) => entry.name === needle);
-		if (exact) return exact.item;
-		const contains = normalized.find((entry) => entry.name !== "" && (entry.name.includes(needle) || needle.includes(entry.name)));
-		if (contains) return contains.item;
-		const simpleNeedle = simplify(needle);
-		if (!simpleNeedle) return void 0;
-		const simplified = items.map((item) => ({
-			item,
-			name: simplify(nameOf(item))
-		}));
-		const simpleExact = simplified.find((entry) => entry.name === simpleNeedle);
-		if (simpleExact) return simpleExact.item;
-		return simplified.find((entry) => entry.name !== "" && (entry.name.includes(simpleNeedle) || simpleNeedle.includes(entry.name)))?.item;
+	const indexes = /* @__PURE__ */ new WeakMap();
+	function indexOf(phonebook) {
+		let index = indexes.get(phonebook);
+		if (index) return index;
+		index = {
+			brands: phonebook.map((brand) => ({
+				item: brand,
+				normalized: normalize(brand.name),
+				simplified: simplify(brand.name)
+			})),
+			files: /* @__PURE__ */ new Map()
+		};
+		indexes.set(phonebook, index);
+		return index;
 	}
 	/** The terse form expanded, so only one shape reaches the matcher. */
 	function asPhone(entry) {
@@ -453,14 +483,40 @@
 			file: entry
 		} : entry;
 	}
-	function findPhone(phones, model) {
-		const direct = findBy(phones, model, (phone) => phone.name ?? "");
-		if (direct) return direct;
-		return phones.find((phone) => {
-			const prefix = normalize(phone.prefix);
-			const suffix = normalize(phone.suffix);
-			return prefix !== "" && prefix.includes(model) || suffix !== "" && suffix.includes(model);
+	function phonesOf(brand) {
+		if (brand.phones) return brand.phones;
+		brand.phones = (brand.item.phones ?? []).map((entry) => {
+			const phone = asPhone(entry);
+			return {
+				item: phone,
+				normalized: normalize(phone.name),
+				simplified: simplify(phone.name),
+				prefix: normalize(phone.prefix),
+				suffix: normalize(phone.suffix)
+			};
 		});
+		return brand.phones;
+	}
+	/** Ordered match strategies, strictest first. Returns the index entry, not the item. */
+	function findBy(entries, needle) {
+		if (!needle) return void 0;
+		for (const entry of entries) if (entry.normalized === needle) return entry;
+		for (const entry of entries) {
+			const name = entry.normalized;
+			if (name !== "" && (name.includes(needle) || needle.includes(name))) return entry;
+		}
+		const simpleNeedle = simplify(needle);
+		if (!simpleNeedle) return void 0;
+		for (const entry of entries) if (entry.simplified === simpleNeedle) return entry;
+		for (const entry of entries) {
+			const name = entry.simplified;
+			if (name !== "" && (name.includes(simpleNeedle) || simpleNeedle.includes(name))) return entry;
+		}
+	}
+	function findPhone(phones, model) {
+		const direct = findBy(phones, model);
+		if (direct) return direct.item;
+		return phones.find((phone) => phone.prefix !== "" && phone.prefix.includes(model) || phone.suffix !== "" && phone.suffix.includes(model))?.item;
 	}
 	/**
 	* The first measurement filename for a phonebook entry.
@@ -491,13 +547,21 @@
 		const brandKey = normalize(brand);
 		const modelKey = normalize(model);
 		if (!brandKey || !modelKey) return null;
-		const matchedBrand = findBy(phonebook, brandKey, (entry) => entry.name ?? "");
-		if (!matchedBrand) return null;
-		const matchedPhone = findPhone((matchedBrand.phones ?? []).map(asPhone), modelKey);
-		if (!matchedPhone) return null;
-		const file = phoneFile(matchedPhone);
+		const index = indexOf(phonebook);
+		const cacheKey = `${brandKey}\u0000${modelKey}`;
+		let file = index.files.get(cacheKey);
+		if (file === void 0) {
+			file = matchFile(index, brandKey, modelKey);
+			index.files.set(cacheKey, file);
+		}
 		if (!file) return null;
 		return template.replace("{file}", encodeURIComponent(file.replace(/\s+/g, "_")));
+	}
+	function matchFile(index, brandKey, modelKey) {
+		const brand = findBy(index.brands, brandKey);
+		if (!brand) return null;
+		const matchedPhone = findPhone(phonesOf(brand), modelKey);
+		return matchedPhone ? phoneFile(matchedPhone) : null;
 	}
 	//#endregion
 	//#region src/query.ts
@@ -578,16 +642,22 @@
 			value: raw.toLowerCase()
 		};
 	}
+	/**
+	* One collator for the whole page. Building one per comparison is what makes
+	* `localeCompare` expensive, and a sort of a few hundred rows calls this a few
+	* thousand times.
+	*/
+	const collator = new Intl.Collator(void 0, {
+		numeric: true,
+		sensitivity: "base"
+	});
 	/** Compare two sort values. Missing values always sink, whichever direction. */
 	function compare(a, b, direction) {
 		if (a.missing && b.missing) return 0;
 		if (a.missing) return 1;
 		if (b.missing) return -1;
 		if (typeof a.value === "number" && typeof b.value === "number") return (a.value - b.value) * direction;
-		return String(a.value).localeCompare(String(b.value), void 0, {
-			numeric: true,
-			sensitivity: "base"
-		}) * direction;
+		return collator.compare(String(a.value), String(b.value)) * direction;
 	}
 	/** Split `'rank-asc'` into a column id and a direction. */
 	function parseSortKey(key) {
@@ -614,21 +684,23 @@
 			"brand",
 			"model"
 		].map((role) => getRoleColumn(role)).filter((c) => Boolean(c) && c.id !== primary?.id);
-		return [...rows].sort((a, b) => {
-			if (primary) {
-				const result = compare(sortValue(a, primary, lang, rankIndex), sortValue(b, primary, lang, rankIndex), direction);
-				if (result !== 0) return result;
-			}
-			for (const column of tiebreakers) {
-				const result = compare(sortValue(a, column, lang, rankIndex), sortValue(b, column, lang, rankIndex), 1);
-				if (result !== 0) return result;
+		const ordered = primary ? [primary, ...tiebreakers] : tiebreakers;
+		const keyed = rows.map((row) => ({
+			row,
+			keys: ordered.map((column) => sortValue(row, column, lang, rankIndex))
+		}));
+		keyed.sort((a, b) => {
+			for (let i = 0; i < ordered.length; i++) {
+				const step = compare(a.keys[i], b.keys[i], i === 0 && primary ? direction : 1);
+				if (step !== 0) return step;
 			}
 			return 0;
 		});
+		return keyed.map((entry) => entry.row);
 	}
 	function filterAndSort(rows, type, state, lang) {
 		const columns = visibleColumns(type).filter((c) => c.filter);
-		return sortRows(rows.filter((row) => matchesFilters(row, columns, state, lang)), state.sort, lang);
+		return sortRows(state.search || columns.some((c) => state.columns[c.id]) ? rows.filter((row) => matchesFilters(row, columns, state, lang)) : rows, state.sort, lang);
 	}
 	//#endregion
 	//#region src/color.ts
@@ -708,6 +780,11 @@
 	const ICON_ASTERISK = "M12.9998 3L12.9996 10.267L19.294 6.63397L20.294 8.36602L14.0006 11.999L20.294 15.634L19.294 17.366L12.9996 13.732L12.9998 21H10.9998L10.9996 13.732L4.70557 17.366L3.70557 15.634L9.99857 12L3.70557 8.36602L4.70557 6.63397L10.9996 10.267L10.9998 3H12.9998Z";
 	const ICON_CHEVRON_DOWN = "M11.9999 13.1714L16.9497 8.22168L18.3639 9.63589L11.9999 15.9999L5.63599 9.63589L7.0502 8.22168L11.9999 13.1714Z";
 	const ICON_STAR = "M12 18.26L4.94729 22.2082L6.52281 14.2799L0.587921 8.7918L8.61494 7.84006L12 0.5L15.3851 7.84006L23.4121 8.7918L17.4772 14.2799L19.0527 22.2082L12 18.26Z";
+	const ICON_MEASUREMENTS = "M22.768125 12.478124999999999c-2.15625 4.59375 -4.03125 6.6468750000000005 -6.076874999999999 6.6468750000000005 -2.59125 0 -4.106249999999999 -3.22875 -5.709375 -6.6468750000000005 -0.6693749999999999 -1.43625 -1.3696875 -2.9156250000000004 -2.083125 -3.9721874999999995C8.2865625 7.6021875 7.7371875 7.125 7.3125 7.125c-0.35812499999999997 0 -1.71 0.38625 -4.0396875 5.353125a1.125 1.125 0 0 1 -2.0371875 -0.9562499999999999c2.15625 -4.59375 4.03125 -6.6468750000000005 6.076874999999999 -6.6468750000000005 2.59125 0 4.106249999999999 3.22875 5.709375 6.6468750000000005 0.6740625 1.43625 1.3696875 2.9203124999999996 2.083125 3.9721874999999995 0.6121875 0.90375 1.1615625 1.3809375 1.59375 1.3809375 0.35812499999999997 0 1.71 -0.38625 4.0396875 -5.353125a1.125 1.125 0 0 1 2.0371875 0.9562499999999999Z";
+	const ICON_THEME = "M12 21.9967C6.47715 21.9967 2 17.5196 2 11.9967C2 6.47386 6.47715 1.9967 12 1.9967C17.5228 1.9967 22 6.47386 22 11.9967C22 17.5196 17.5228 21.9967 12 21.9967ZM12 19.9967C16.4183 19.9967 20 16.415 20 11.9967C20 7.57843 16.4183 3.9967 12 3.9967C7.58172 3.9967 4 7.57843 4 11.9967C4 16.415 7.58172 19.9967 12 19.9967ZM7.00035 15.316C9.07995 15.1646 11.117 14.2939 12.7071 12.7038C14.2972 11.1137 15.1679 9.07666 15.3193 6.99706C15.6454 7.21408 15.955 7.46642 16.2426 7.75406C18.5858 10.0972 18.5858 13.8962 16.2426 16.2393C13.8995 18.5825 10.1005 18.5825 7.75736 16.2393C7.46971 15.9517 7.21738 15.6421 7.00035 15.316Z";
+	const ICON_LANGUAGE = "M18.5 10L22.9 21H20.745L19.544 18H15.454L14.255 21H12.101L16.5 10H18.5ZM10 2V4H16V6L14.0322 6.0006C13.2425 8.36616 11.9988 10.5057 10.4115 12.301C11.1344 12.9457 11.917 13.5176 12.7475 14.0079L11.9969 15.8855C10.9237 15.2781 9.91944 14.5524 8.99961 13.7249C7.21403 15.332 5.10914 16.5553 2.79891 17.2734L2.26257 15.3442C4.2385 14.7203 6.04543 13.6737 7.59042 12.3021C6.46277 11.0281 5.50873 9.57985 4.76742 8.00028L7.00684 8.00037C7.57018 9.03885 8.23979 10.0033 8.99967 10.877C10.2283 9.46508 11.2205 7.81616 11.9095 6.00101L2 6V4H8V2H10ZM17.5 12.8852L16.253 16H18.745L17.5 12.8852Z";
+	const ICON_STATS = "M2 13H8V21H2V13ZM9 3H15V21H9V3ZM16 8H22V21H16V8Z";
+	const ICON_ARROW_UP = "M13.0001 7.82843V20H11.0001V7.82843L5.63614 13.1924L4.22192 11.7782L12.0001 4L19.7783 11.7782L18.3641 13.1924L13.0001 7.82843Z";
 	//#endregion
 	//#region src/render/blocks.ts
 	const BLOCK_ICONS = {
@@ -950,19 +1027,287 @@
 		}
 		return card;
 	}
+	/**
+	* Cards already built, keyed by the row object they were built from.
+	*
+	* A card is a pure function of its row, its columns and the language, and rows
+	* keep their identity for as long as a type is loaded. Filtering and sorting
+	* therefore only need to reorder existing nodes, not rebuild a few hundred of
+	* them on every keystroke. It also means a measurement link that the phonebook
+	* resolved survives the next render instead of being thrown away and refetched.
+	*
+	* `columns` comes from the memoized `visibleColumns`, so its identity is stable
+	* per type and changes exactly when the cards would have to be rebuilt anyway.
+	*/
+	let cache = null;
 	/** Replace the card list with the given rows, or a message when empty. */
 	function renderCards(container, rows, columns, lang) {
-		container.replaceChildren();
 		if (!rows.length) {
-			container.appendChild(el("p", {
+			container.replaceChildren(el("p", {
 				class: "list-empty",
 				text: t("noResults", lang)
 			}));
 			return;
 		}
+		if (!cache || cache.lang !== lang || cache.columns !== columns) cache = {
+			lang,
+			columns,
+			byRow: /* @__PURE__ */ new WeakMap()
+		};
 		const fragment = document.createDocumentFragment();
-		for (const row of rows) fragment.appendChild(renderCard(row, columns, lang));
-		container.appendChild(fragment);
+		for (const row of rows) {
+			let card = cache.byRow.get(row);
+			if (!card) {
+				card = renderCard(row, columns, lang);
+				cache.byRow.set(row, card);
+			}
+			fragment.appendChild(card);
+		}
+		container.replaceChildren(fragment);
+	}
+	//#endregion
+	//#region src/render/modal.ts
+	const FOCUSABLE = "button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])";
+	let modal = null;
+	let closeButton = null;
+	let lastFocused = null;
+	let onOpen = null;
+	/** Keep Tab inside the dialog, and let Escape dismiss it. */
+	function handleKeydown(event) {
+		if (!modal?.classList.contains("open")) return;
+		if (event.key === "Escape") {
+			closeStatsModal();
+			return;
+		}
+		if (event.key !== "Tab") return;
+		const focusable = modal.querySelectorAll(FOCUSABLE);
+		const first = focusable[0];
+		const last = focusable[focusable.length - 1];
+		if (!first || !last) return;
+		if (event.shiftKey && document.activeElement === first) {
+			last.focus();
+			event.preventDefault();
+		} else if (!event.shiftKey && document.activeElement === last) {
+			first.focus();
+			event.preventDefault();
+		}
+	}
+	/**
+	* Build the modal and append it to `parent`.
+	*
+	* `handlers.onOpen` runs on every open, so the chart is drawn against whatever
+	* rows are on screen at that moment rather than the ones present at startup.
+	*/
+	function mountStatsModal(parent, lang, handlers) {
+		onOpen = handlers.onOpen;
+		const backdrop = el("div", { class: "stats-modal-backdrop" });
+		backdrop.addEventListener("click", closeStatsModal);
+		closeButton = el("button", {
+			type: "button",
+			id: "close-stats-modal",
+			class: "stats-modal-close",
+			"data-i18n-label": "closeStats",
+			"aria-label": t("closeStats", lang),
+			text: "×"
+		});
+		closeButton.addEventListener("click", closeStatsModal);
+		const average = el("div", { class: "stats-average" }, [
+			el("b", {
+				id: "avg-score-label",
+				"data-i18n": "averageScore",
+				text: t("averageScore", lang)
+			}),
+			el("span", {
+				id: "avg-score",
+				text: "-"
+			}),
+			el("span", { id: "avg-score-denominator" })
+		]);
+		modal = el("div", {
+			id: "stats-modal",
+			class: "stats-modal",
+			role: "dialog",
+			"aria-modal": "true",
+			"aria-labelledby": "stats-modal-title",
+			tabindex: "-1"
+		}, [backdrop, el("div", {
+			class: "stats-modal-content",
+			role: "document"
+		}, [
+			closeButton,
+			el("h2", {
+				id: "stats-modal-title",
+				"data-i18n": "statsTitle",
+				text: t("statsTitle", lang)
+			}),
+			el("div", { class: "chart-container" }, [el("canvas", { id: "rank-bar-chart" })]),
+			average
+		])]);
+		modal.addEventListener("keydown", handleKeydown);
+		parent.appendChild(modal);
+	}
+	function openStatsModal() {
+		if (!modal) return;
+		lastFocused = document.activeElement;
+		modal.classList.add("open");
+		document.body.style.overflow = "hidden";
+		onOpen?.();
+		closeButton?.focus();
+	}
+	function closeStatsModal() {
+		if (!modal) return;
+		modal.classList.remove("open");
+		document.body.style.overflow = "";
+		(lastFocused?.isConnected ? lastFocused : document.getElementById("open-stats-modal"))?.focus();
+	}
+	//#endregion
+	//#region src/render/chrome.ts
+	const LINK_ICONS = {
+		measurements: ICON_MEASUREMENTS,
+		external: ICON_EXTERNAL_LINK,
+		info: ICON_QUESTION
+	};
+	function chrome() {
+		return getConfig().chrome ?? {};
+	}
+	function statsEnabled() {
+		return getConfig().stats?.enabled !== false;
+	}
+	/**
+	* An icon button carrying a built-in string.
+	*
+	* The `data-i18n-*` attributes are what `applyStrings` looks for, so a button
+	* that outlives a language change updates itself; the resolved values are set
+	* here too, so one that is built fresh is correct before that ever runs.
+	*/
+	function iconButton(id, path, key, lang, onClick) {
+		const button = el("button", {
+			type: "button",
+			id,
+			"data-i18n-title": key,
+			"data-i18n-label": key,
+			title: t(key, lang),
+			"aria-label": t(key, lang)
+		});
+		button.appendChild(svgIcon([path]));
+		button.addEventListener("click", onClick);
+		return button;
+	}
+	/** An operator-configured link. Falls back to the href when it has no label. */
+	function chromeLink(link, lang, className) {
+		const label = resolveI18n(link.label, lang);
+		const title = resolveI18n(link.title, lang) || label;
+		const anchor = el("a", {
+			class: className,
+			href: link.href
+		});
+		if (title) {
+			anchor.title = title;
+			anchor.setAttribute("aria-label", title);
+		}
+		if (link.newTab) {
+			anchor.target = "_blank";
+			anchor.rel = "noopener";
+		}
+		if (link.icon && LINK_ICONS[link.icon]) anchor.appendChild(svgIcon([LINK_ICONS[link.icon]]));
+		if (label || !link.icon) anchor.appendChild(el("span", { text: label || link.href }));
+		return anchor;
+	}
+	function headerTitle(lang) {
+		const config = chrome();
+		const box = el("div", { class: "header-title" });
+		const title = config.title === false ? "" : resolveI18n(config.title, lang);
+		if (title) box.appendChild(config.titleUrl ? el("a", {
+			class: "header-title-link",
+			href: config.titleUrl,
+			text: title
+		}) : el("span", { text: title }));
+		const subtitle = resolveI18n(config.subtitle, lang);
+		if (subtitle) box.appendChild(el("span", {
+			class: "header-subtitle",
+			text: subtitle
+		}));
+		return box;
+	}
+	/**
+	* Rebuild the header.
+	*
+	* Safe to call repeatedly: it replaces its own container's children and rebinds
+	* every listener it needs.
+	*/
+	function renderHeader(lang, handlers) {
+		const host = document.getElementById("ranking-header");
+		if (!host) return;
+		const config = chrome();
+		const links = el("div", { class: "header-links" });
+		for (const link of config.links ?? []) links.appendChild(chromeLink(link, lang, "button-like"));
+		if (config.measurementsLink !== false) {
+			const measurements = el("a", {
+				id: "link-measurements-page",
+				class: "button-like",
+				href: "#",
+				"data-i18n-title": "measurementsPage",
+				"data-i18n-label": "measurementsPage",
+				title: t("measurementsPage", lang),
+				"aria-label": t("measurementsPage", lang)
+			});
+			measurements.appendChild(svgIcon([ICON_MEASUREMENTS]));
+			measurements.hidden = true;
+			links.appendChild(measurements);
+		}
+		if (config.themeToggle !== false) links.appendChild(iconButton("toggle-theme", ICON_THEME, "toggleTheme", lang, handlers.onToggleTheme));
+		if (config.languageToggle ?? languages().length > 1) links.appendChild(iconButton("toggle-language", ICON_LANGUAGE, "toggleLanguage", lang, handlers.onToggleLanguage));
+		const top = el("div", { class: "header-top" }, [headerTitle(lang), links]);
+		const bar = el("div", { class: "ranking-header" }, [el("div", { class: "toggle-group" })]);
+		if (statsEnabled()) bar.appendChild(iconButton("open-stats-modal", ICON_STATS, "openStats", lang, handlers.onOpenStats));
+		host.replaceChildren(top, bar);
+	}
+	function footerNotes(note, lang) {
+		if (!note) return [];
+		return (Array.isArray(note) ? note : [note]).map((entry) => resolveI18n(entry, lang)).filter(Boolean);
+	}
+	/** Rebuild the footer. Hidden entirely when the config gives it nothing to say. */
+	function renderFooter(lang) {
+		const host = document.getElementById("ranking-footer");
+		if (!host) return;
+		const footer = chrome().footer ?? {};
+		const notes = footerNotes(footer.note, lang);
+		const links = footer.links ?? [];
+		host.replaceChildren();
+		host.hidden = !notes.length && !links.length;
+		if (host.hidden) return;
+		if (notes.length) {
+			const top = el("div", { class: "footer-top" });
+			for (const note of notes) {
+				const line = el("span", { class: "footer-note" });
+				appendTextWithBreaks(line, note);
+				top.appendChild(line);
+			}
+			host.appendChild(top);
+		}
+		if (notes.length && links.length) host.appendChild(el("hr", { class: "footer-hr" }));
+		if (links.length) {
+			const bottom = el("div", { class: "footer-bottom" });
+			for (const link of links) bottom.appendChild(chromeLink(link, lang, "footer-link"));
+			host.appendChild(bottom);
+		}
+	}
+	/**
+	* Build the containers the rest of core renders into, plus the two pieces of
+	* furniture that never change: the stats modal and the scroll-to-top button.
+	* Called once, before the first render.
+	*/
+	function mountContent(lang, handlers) {
+		const host = document.getElementById("ranking-content");
+		if (!host) return;
+		host.append(el("div", { id: "filter-controls" }), el("div", { id: "device-card-list" }));
+		if (statsEnabled()) mountStatsModal(host, lang, { onOpen: handlers.onOpenStats });
+		host.appendChild(iconButton("scroll-to-top-btn", ICON_ARROW_UP, "scrollTop", lang, () => {
+			window.scrollTo({
+				top: 0,
+				behavior: "smooth"
+			});
+		}));
 	}
 	//#endregion
 	//#region src/render/controls.ts
@@ -1285,17 +1630,22 @@
 	function apply(theme) {
 		document.documentElement.setAttribute("data-theme", theme);
 	}
-	function setupTheme(button) {
+	/** Apply the theme for this page view. Call once, as early as possible. */
+	function setupTheme() {
 		const stored = read();
 		apply(stored ?? systemTheme());
 		if (!stored) (globalThis.matchMedia?.("(prefers-color-scheme: dark)"))?.addEventListener("change", (event) => {
 			if (!read()) apply(event.matches ? "dark" : "light");
 		});
-		button?.addEventListener("click", () => {
-			const next = (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light") === "dark" ? "light" : "dark";
-			apply(next);
-			write(next);
-		});
+	}
+	/**
+	* Flip to the other theme and remember the choice. Exported rather than bound
+	* to a button here, because the header button is rebuilt on language changes.
+	*/
+	function toggleTheme() {
+		const next = (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light") === "dark" ? "light" : "dark";
+		apply(next);
+		write(next);
 	}
 	//#endregion
 	//#region src/main.ts
@@ -1380,6 +1730,7 @@
 		for (const row of rows) {
 			const link = document.getElementById(buildCardId(row))?.querySelector(".device-card-measurement");
 			if (!link) continue;
+			if (!link.hidden) continue;
 			const href = resolveMeasurementUrl(phonebook, columnValue(row, brandColumn, state.lang), columnValue(row, modelColumn, state.lang), template);
 			if (!href) continue;
 			link.href = href;
@@ -1433,68 +1784,33 @@
 		renderFilterPanel();
 		renderList();
 	}
-	function applyLanguage(lang) {
-		state.lang = lang;
-		document.documentElement.lang = lang;
-		applyStrings(document, lang);
-		renderTypeToggles();
-		syncTypeToggles();
-		renderFilterPanel();
-		renderList();
-	}
-	function setupLanguageToggle() {
-		byId("toggle-language")?.addEventListener("click", () => {
+	/**
+	* Chrome owns no state of its own, so it takes the three things it can make
+	* happen as callbacks. They are rebound every time the header is rebuilt.
+	*/
+	const chromeHandlers = {
+		onToggleTheme: toggleTheme,
+		onToggleLanguage: () => {
 			const next = nextLanguage(state.lang);
 			try {
 				localStorage.setItem(LANG_STORAGE_KEY, next);
 			} catch {}
 			applyLanguage(next);
-		});
-	}
-	function setupStatsModal() {
-		const modal = byId("stats-modal");
-		const openButton = byId("open-stats-modal");
-		const closeButton = byId("close-stats-modal");
-		if (!modal || !openButton || !closeButton) return;
-		if (getConfig().stats?.enabled === false) {
-			openButton.hidden = true;
-			return;
-		}
-		let lastFocused = null;
-		const open = () => {
-			lastFocused = document.activeElement;
-			modal.classList.add("open");
-			document.body.style.overflow = "hidden";
-			renderStats(state.rows, state.lang);
-			closeButton.focus();
-		};
-		const close = () => {
-			modal.classList.remove("open");
-			document.body.style.overflow = "";
-			(lastFocused ?? openButton).focus();
-		};
-		openButton.addEventListener("click", open);
-		closeButton.addEventListener("click", close);
-		modal.querySelector(".stats-modal-backdrop")?.addEventListener("click", close);
-		modal.addEventListener("keydown", (event) => {
-			if (!modal.classList.contains("open")) return;
-			if (event.key === "Escape") {
-				close();
-				return;
-			}
-			if (event.key !== "Tab") return;
-			const focusable = modal.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])");
-			const first = focusable[0];
-			const last = focusable[focusable.length - 1];
-			if (!first || !last) return;
-			if (event.shiftKey && document.activeElement === first) {
-				last.focus();
-				event.preventDefault();
-			} else if (!event.shiftKey && document.activeElement === last) {
-				first.focus();
-				event.preventDefault();
-			}
-		});
+		},
+		onOpenStats: openStatsModal
+	};
+	/** Rebuild everything whose text depends on the language. */
+	function applyLanguage(lang) {
+		state.lang = lang;
+		document.documentElement.lang = lang;
+		renderHeader(lang, chromeHandlers);
+		renderFooter(lang);
+		applyStrings(document, lang);
+		renderTypeToggles();
+		syncTypeToggles();
+		syncMeasurementsLink();
+		renderFilterPanel();
+		renderList();
 	}
 	function typeForCardId(cardId) {
 		for (const id of getTypeIds()) if ((state.rowsByType[id] ?? []).some((row) => buildCardId(row) === cardId)) return id;
@@ -1546,19 +1862,14 @@
 		}
 		state.lang = detectLanguage(LANG_STORAGE_KEY);
 		document.documentElement.lang = state.lang;
+		setupTheme();
+		mountContent(state.lang, { onOpenStats: () => void renderStats(state.rows, state.lang) });
+		renderHeader(state.lang, chromeHandlers);
+		renderFooter(state.lang);
 		applyStrings(document, state.lang);
-		setupTheme(byId("toggle-theme"));
-		setupLanguageToggle();
-		setupStatsModal();
 		renderTypeToggles();
 		const list = byId("device-card-list");
 		if (list) renderSkeletons(list);
-		byId("scroll-to-top-btn")?.addEventListener("click", () => {
-			window.scrollTo({
-				top: 0,
-				behavior: "smooth"
-			});
-		});
 		await loadAllTypes();
 		const requested = new URLSearchParams(window.location.search).get("type");
 		setType(typeForCardId(decodeURIComponent(window.location.hash.replace(/^#/, ""))) ?? (requested && getType(requested) ? requested : typeIds[0]));

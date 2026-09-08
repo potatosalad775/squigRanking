@@ -1,6 +1,20 @@
-Copy index.html, style.css, core.js and ranking-config.js into your
-ranking/ directory, then edit ranking-config.js to point at your sheet.
-Skip the .map files and this one.
+Two ways to deploy. Both start with editing ranking-config.js to point at
+your sheet; they differ only in which files you copy alongside it.
+
+AUTO-UPDATING (2 files)
+  Copy index.html and ranking-config.js into your ranking/ directory.
+  The page pulls the newest core and stylesheet from the CDN on load, so
+  bug fixes arrive without you doing anything. Pin a version any time by
+  adding `cdn: { majorVersion: 1 }` to ranking-config.js.
+
+SELF-HOSTED (5 files)
+  Copy index.html, ranking-config.js, loader.js, core.min.js and style.css.
+  loader.js finds the build next to it and never touches the CDN, so the
+  page works offline and behind a firewall. Updating means copying the
+  files again from a newer release.
+
+  core.js is the same build unminified, for debugging a deploy in place.
+  Use it with `cdn: { debug: true }`. Skip the .map files and this one.
 
 TEMPLATE.csv and TEMPLATE.xlsx are starting points for that sheet. Import
 the .xlsx into Google Sheets with File > Import to get the rank dropdown,
@@ -11,10 +25,11 @@ presets/<name>/ over the ones here. Available: letter, score, stars.
 
 Setup guide: https://potatosalad775.github.io/squigRanking/docs/
 
-core.js              52.6 kB
-core.min.js          26.4 kB
-index.html           6.3 kB
-style.css            17.5 kB
-ranking-config.js    5.6 kB
+core.js              64.8 kB
+core.min.js          32.7 kB
+loader.js            8.7 kB
+index.html           3.1 kB
+style.css            17.9 kB
+ranking-config.js    6.3 kB
 TEMPLATE.csv         0.8 kB
 TEMPLATE.xlsx        10.7 kB

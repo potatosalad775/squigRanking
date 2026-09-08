@@ -84,6 +84,12 @@ button, a.button-like {
   font-family: inherit;
   outline: none;
   border: none;
+  /* Centres an icon, a label, or an icon next to a label, without each button
+     needing its own rule. Buttons wanting another layout override `display`. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   padding: 0.5rem; 
   border-radius: 0.375rem;
   color: inherit;
@@ -151,6 +157,13 @@ select, input {
   font-size: 1rem;
   color: var(--color-text);
 }
+.header-title-link {
+  color: inherit;
+}
+.header-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
 .header-links {
   display: flex;
   align-items: center;
@@ -179,7 +192,7 @@ select, input {
 }
 .toggle-btn {
   flex: 1;
-  height: 2.25rem;
+  height: 2rem;
   margin: 0.25rem 0;
   border-radius: 12px;
   border: none;

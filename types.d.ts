@@ -2,10 +2,14 @@
  * Schema version understood by this build.
  *
  * 2 added `scale` on the rank column, which lets `filter.values`,
- * `stats.chartColors` and the Score column all be omitted. A version-1 core
- * cannot read a version-2 config, so it says so instead of failing silently.
+ * `stats.chartColors` and the Score column all be omitted.
+ *
+ * 3 added `chrome`. The page shell is now three empty landmarks and core
+ * builds everything inside them, so the header title, the header links, which
+ * toggles appear and the whole footer moved out of `index.html` and into the
+ * config. A version-2 config renders a page with no title and no footer.
  */
-export declare const CONFIG_VERSION = 2;
+export declare const CONFIG_VERSION = 3;
 /** A raw CSV row: header name -> trimmed cell value. */
 export type Row = Record<string, string>;
 /** Language tag used for chrome strings and per-locale data fields. */
@@ -216,16 +220,89 @@ export interface StatsConfig {
     /** Chart.js URL, loaded on first open of the stats modal. */
     chartLibUrl?: string;
 }
+/** Built-in icons a chrome link can draw. */
+export type ChromeIcon = 'measurements' | 'external' | 'info';
+/** A link in the header bar or the footer. */
+export interface ChromeLink {
+    href: string;
+    /** Visible text. A link with only an `icon` renders as an icon button. */
+    label?: I18nString;
+    /** Icon drawn before the label. */
+    icon?: ChromeIcon;
+    /** Tooltip and accessible name. Defaults to `label`. */
+    title?: I18nString;
+    /** Open in a new tab. */
+    newTab?: boolean;
+}
+export interface FooterConfig {
+    /**
+     * The disclaimer under the list. Pass an array for several paragraphs.
+     * There is no built-in default: an unset note renders nothing.
+     */
+    note?: I18nString | I18nString[];
+    /** Links along the footer's bottom row. */
+    links?: ChromeLink[];
+}
+/**
+ * The page shell: header, footer, and which of the built-in controls appear.
+ *
+ * `index.html` ships three empty landmarks — `#ranking-header`,
+ * `#ranking-content` and `#ranking-footer` — and core builds what goes inside
+ * them from here. Nothing on this page needs the markup edited to be branded.
+ */
+export interface ChromeConfig {
+    /** Header title. `false` renders no title at all. */
+    title?: I18nString | false;
+    /** Second line under the title. */
+    subtitle?: I18nString;
+    /** Wraps the title in a link, e.g. back to the measurement site. */
+    titleUrl?: string;
+    /** Show the light/dark toggle. Defaults to true. */
+    themeToggle?: boolean;
+    /** Show the language toggle. Defaults to true when more than one language is offered. */
+    languageToggle?: boolean;
+    /** Show the measurements icon for types declaring `measurementsPageUrl`. Defaults to true. */
+    measurementsLink?: boolean;
+    /** Extra header links, rendered before the built-in buttons. */
+    links?: ChromeLink[];
+    footer?: FooterConfig;
+}
 export interface DeepLinkConfig {
     /** Anchor template, e.g. `'{Brand}-{Model}'`. */
     template?: string;
     slugify?: 'lowercase-hyphen' | 'none';
+}
+/**
+ * Where the page loads its own build from. Read by loader.js before core exists,
+ * so nothing here reaches core — it is declared for the editor's benefit.
+ *
+ * The defaults suit both deploys, and most operators never set any of it.
+ */
+export interface CdnConfig {
+    /**
+     * `'auto'` (default) follows loader.js: a copy in your own folder means the
+     * build is there too, the CDN copy means fetch the published build. Override
+     * with `'local'` or `'cdn'` when you mix the two.
+     */
+    source?: 'auto' | 'local' | 'cdn';
+    /** Exact version to load, e.g. `'1.2.3'`. Skips the version lookup entirely. */
+    version?: string;
+    /** Major version to track. Defaults to the highest published. */
+    majorVersion?: number;
+    /** CDN base URL. Defaults to the project's jsDelivr URL. */
+    base?: string;
+    /** Full URL to versions.json. Defaults to the raw GitHub equivalent of `base`. */
+    versionsUrl?: string;
+    /** Load the readable `core.js` rather than `core.min.js`. */
+    debug?: boolean;
 }
 export interface RankingConfig {
     /** Schema version this config targets. Core warns when it does not match. */
     configVersion?: number;
     types: Record<string, TypeConfig>;
     columns: ColumnConfig[];
+    /** Header, footer and the built-in controls. */
+    chrome?: ChromeConfig;
     search?: SearchConfig;
     sort?: SortConfig;
     stats?: StatsConfig;
@@ -234,6 +311,8 @@ export interface RankingConfig {
     languages?: Lang[];
     /** Overrides for built-in chrome strings, keyed by language then string id. */
     i18n?: Record<Lang, Record<string, string>>;
+    /** Where the page loads its own build from. Read by loader.js, not by core. */
+    cdn?: CdnConfig;
 }
 declare global {
     interface Window {
