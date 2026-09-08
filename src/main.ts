@@ -11,10 +11,13 @@ import { applyStrings, detectLanguage, nextLanguage, t } from './i18n.ts';
 import { loadPhonebook, resolveMeasurementUrl, type Phonebook } from './phonebook.ts';
 import { filterAndSort, initialFilterState, type FilterState } from './query.ts';
 import { renderCards } from './render/cards.ts';
+import {
+  mountContent, openStatsModal, renderFooter, renderHeader, type ChromeHandlers,
+} from './render/chrome.ts';
 import { renderControls } from './render/controls.ts';
 import { renderSkeletons } from './render/skeleton.ts';
 import { renderStats } from './stats.ts';
-import { setupTheme } from './theme.ts';
+import { setupTheme, toggleTheme } from './theme.ts';
 import type { Lang, Row } from './types.ts';
 
 const LANG_STORAGE_KEY = 'preferred-lang';
@@ -188,19 +191,13 @@ function setType(type: string, options: { updateUrl?: boolean } = {}): void {
   renderList();
 }
 
-function applyLanguage(lang: Lang): void {
-  state.lang = lang;
-  document.documentElement.lang = lang;
-  applyStrings(document, lang);
-  renderTypeToggles();
-  syncTypeToggles();
-  renderFilterPanel();
-  renderList();
-}
-
-function setupLanguageToggle(): void {
-  const button = byId('toggle-language');
-  button?.addEventListener('click', () => {
+/**
+ * Chrome owns no state of its own, so it takes the three things it can make
+ * happen as callbacks. They are rebound every time the header is rebuilt.
+ */
+const chromeHandlers: ChromeHandlers = {
+  onToggleTheme: toggleTheme,
+  onToggleLanguage: () => {
     const next = nextLanguage(state.lang);
     try {
       localStorage.setItem(LANG_STORAGE_KEY, next);
@@ -208,62 +205,24 @@ function setupLanguageToggle(): void {
       /* storage blocked; the choice lasts for this page view only */
     }
     applyLanguage(next);
-  });
-}
+  },
+  onOpenStats: openStatsModal,
+};
 
-// ---------------- Stats modal ----------------
-
-function setupStatsModal(): void {
-  const modal = byId('stats-modal');
-  const openButton = byId('open-stats-modal');
-  const closeButton = byId('close-stats-modal');
-  if (!modal || !openButton || !closeButton) return;
-
-  if (getConfig().stats?.enabled === false) {
-    openButton.hidden = true;
-    return;
-  }
-
-  let lastFocused: HTMLElement | null = null;
-
-  const open = (): void => {
-    lastFocused = document.activeElement as HTMLElement | null;
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    void renderStats(state.rows, state.lang);
-    closeButton.focus();
-  };
-  const close = (): void => {
-    modal.classList.remove('open');
-    document.body.style.overflow = '';
-    (lastFocused ?? openButton).focus();
-  };
-
-  openButton.addEventListener('click', open);
-  closeButton.addEventListener('click', close);
-  modal.querySelector('.stats-modal-backdrop')?.addEventListener('click', close);
-
-  modal.addEventListener('keydown', event => {
-    if (!modal.classList.contains('open')) return;
-    if (event.key === 'Escape') {
-      close();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-    const focusable = modal.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (!first || !last) return;
-    if (event.shiftKey && document.activeElement === first) {
-      last.focus();
-      event.preventDefault();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      first.focus();
-      event.preventDefault();
-    }
-  });
+/** Rebuild everything whose text depends on the language. */
+function applyLanguage(lang: Lang): void {
+  state.lang = lang;
+  document.documentElement.lang = lang;
+  // The header is rebuilt from scratch, so the toggles and the measurements
+  // link that live inside it have to be filled in again afterwards.
+  renderHeader(lang, chromeHandlers);
+  renderFooter(lang);
+  applyStrings(document, lang);
+  renderTypeToggles();
+  syncTypeToggles();
+  syncMeasurementsLink();
+  renderFilterPanel();
+  renderList();
 }
 
 // ---------------- Deep links ----------------
@@ -334,19 +293,18 @@ async function start(): Promise<void> {
 
   state.lang = detectLanguage(LANG_STORAGE_KEY);
   document.documentElement.lang = state.lang;
-  applyStrings(document, state.lang);
+  setupTheme();
 
-  setupTheme(byId('toggle-theme'));
-  setupLanguageToggle();
-  setupStatsModal();
+  // Build the page before anything tries to render into it. The content
+  // scaffold is built once; the header and footer are rebuilt per language.
+  mountContent(state.lang, { onOpenStats: () => void renderStats(state.rows, state.lang) });
+  renderHeader(state.lang, chromeHandlers);
+  renderFooter(state.lang);
+  applyStrings(document, state.lang);
   renderTypeToggles();
 
   const list = byId('device-card-list');
   if (list) renderSkeletons(list);
-
-  byId('scroll-to-top-btn')?.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
 
   await loadAllTypes();
 

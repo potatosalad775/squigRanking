@@ -76,10 +76,16 @@ writeFileSync(
   'utf8',
 );
 
-// Sanity check: the page must reference the bundled script, not a source path.
+// Sanity check: the page must reference the bundled script, and still carry the
+// three landmarks core renders into. Either one missing is a blank page.
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
 if (!html.includes('src="core.js"')) {
   throw new Error('index.html does not load core.js — the deploy bundle would be broken.');
+}
+for (const id of ['ranking-header', 'ranking-content', 'ranking-footer']) {
+  if (!html.includes(`id="${id}"`)) {
+    throw new Error(`index.html is missing #${id} — core would have nothing to render into.`);
+  }
 }
 
 console.log(`bundle ready in dist/\n${sizes.join('\n')}`);

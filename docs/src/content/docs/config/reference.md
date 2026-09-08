@@ -12,7 +12,7 @@ The authoritative definition is [`src/types.ts`](https://github.com/potatosalad7
 ## `configVersion`
 
 ```js
-configVersion: 2,
+configVersion: 3,
 ```
 
 The schema version this file targets. Core warns when a config declares a version newer than it understands, so a stale `core.js` after a CDN major bump says so in the console instead of silently half-working. An older config raises no warning: it still works. Optional, but recommended.
@@ -21,6 +21,7 @@ The schema version this file targets. Core warns when a config declares a versio
 |---------|-----------------------------------------------------------------------------|
 | 1       | the original schema                                                          |
 | 2       | `scale` on the rank column, and the `stars` and `score-badge` renderers      |
+| 3       | `chrome`: the header and footer moved out of `index.html` and into the config |
 
 ---
 
@@ -234,6 +235,45 @@ Chart.js is fetched the first time the statistics modal is opened, so it never d
 
 ---
 
+## `chrome`
+
+The page shell. `index.html` is three empty landmarks — `#ranking-header`, `#ranking-content` and `#ranking-footer` — and core builds everything inside them, so branding the page never means editing markup.
+
+```js
+chrome: {
+  title: { default: 'SquigRanking', i18n: { ko: '랭킹' } },
+  subtitle: 'IEM and headphone rankings',
+  titleUrl: '../',
+  links: [
+    { href: 'https://example.com/blog', label: 'Blog', icon: 'external', newTab: true },
+  ],
+  footer: {
+    note: { default: 'Rankings reflect my own listening.', i18n: { ko: '...' } },
+    links: [{ href: 'https://example.com', label: 'My site', newTab: true }],
+  },
+},
+```
+
+| key                | what it does                                                                        |
+|--------------------|-------------------------------------------------------------------------------------|
+| `title`            | Header title. An `I18nString`, or `false` for no title. Omitted renders nothing.      |
+| `subtitle`         | A second line under the title.                                                        |
+| `titleUrl`         | Wraps the title in a link, e.g. back to your measurement page.                         |
+| `themeToggle`      | Show the light/dark button. Default `true`.                                            |
+| `languageToggle`   | Show the language button. Defaults to on when more than one language is offered.        |
+| `measurementsLink` | Show the header measurement icon. Default `true`; it appears only for types declaring `measurementsPageUrl`. |
+| `links`            | Extra header links, before the built-in buttons.                                       |
+| `footer.note`      | The disclaimer under the list. Pass an array for several paragraphs.                    |
+| `footer.links`     | Links along the footer's bottom row.                                                    |
+
+A link takes `href`, an optional `label` (an `I18nString`), an optional `icon` (`measurements`, `external` or `info`), an optional `title` for the tooltip and accessible name, and `newTab`.
+
+There are no defaults for the wording: a config with no `chrome.title` renders no title, and one with no `footer` renders no footer bar at all rather than an empty strip. The shipped presets set both, so a fresh download has them.
+
+What stays in `index.html` is the `<head>`: `<title>`, the `og:` tags, the canonical URL and the favicon. Those are read by crawlers and link previews before any script runs, so they cannot come from a config.
+
+---
+
 ## `languages` and `i18n`
 
 Interface strings ship inside the bundle in English and Korean. Override any of them, or add a language:
@@ -245,9 +285,13 @@ i18n: {
 },
 ```
 
-The toggle button cycles through `languages` in order. Any string you do not override falls back to the built-in value, then to English. Available keys: `filterAndSort`, `resetFilters`, `search`, `sortBy`, `all`, `statsTitle`, `averageScore`, `deviceCount`, `closeStats`, `openStats`, `measurementsPage`, `toggleTheme`, `toggleLanguage`, `scrollTop`, `noResults`, `loadError`, `ascending`, `descending`, `footerNote`.
+The toggle button cycles through `languages` in order. Any string you do not override falls back to the built-in value, then to English. Available keys: `filterAndSort`, `resetFilters`, `search`, `sortBy`, `all`, `statsTitle`, `averageScore`, `deviceCount`, `closeStats`, `openStats`, `measurementsPage`, `toggleTheme`, `toggleLanguage`, `scrollTop`, `noResults`, `loadError`, `ascending`, `descending`.
 
-To translate page chrome in `index.html`, add `data-i18n="key"` to an element and it will be filled from this table. `data-i18n-title` and `data-i18n-label` do the same for the `title` and `aria-label` attributes.
+Only strings core writes itself live here. Your own wording — the header title, the footer note — belongs in [`chrome`](#chrome), which takes an `I18nString` for each and so carries its own translations.
+
+Declaring a single language hides the language toggle, since there is nothing to switch to. Set `chrome.languageToggle: true` to show it anyway.
+
+If you add markup of your own to `index.html`, `data-i18n="key"` on an element fills it from this table; `data-i18n-title` and `data-i18n-label` do the same for the `title` and `aria-label` attributes.
 
 ---
 

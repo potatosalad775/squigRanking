@@ -51,6 +51,15 @@ async function bootPage(csv: string = template, configSource: string = config): 
   return dom;
 }
 
+/**
+ * The preset config with one top-level key replaced, written as the source text
+ * `bootPage` evaluates. Patching the object after it is assigned beats editing
+ * the preset's text, which would break the next time the preset is reformatted.
+ */
+function withChrome(override: string): string {
+  return `${config}\nObject.assign(window.RANKING_CONFIG, { ${override} });`;
+}
+
 function cards(dom: JSDOM): HTMLElement[] {
   return [...dom.window.document.querySelectorAll<HTMLElement>('#device-card-list .device-card')];
 }
@@ -195,7 +204,55 @@ describe('language and chrome', () => {
     const requests = (dom.window as unknown as { __requests: string[] }).__requests;
     assert.equal(requests.some(url => url.includes('lang/')), false);
     assert.equal(text(dom, '#stats-modal-title'), 'Ranking Statistics');
-    assert.ok(text(dom, '#footer-text-1').startsWith("The 'Ranking List'"));
+  });
+
+  test('the header and footer are built from the config, not the markup', async () => {
+    const dom = await bootPage();
+    // The shell ships three empty landmarks; everything below comes from core.
+    assert.ok(!html.includes('header-title'), 'index.html still carries header markup');
+    assert.equal(text(dom, '.header-title'), 'SquigRanking');
+    assert.ok(text(dom, '.footer-note').startsWith("The 'Ranking List'"));
+    assert.ok(dom.window.document.getElementById('toggle-theme'), 'no theme toggle');
+    assert.ok(dom.window.document.getElementById('open-stats-modal'), 'no stats button');
+    assert.ok(dom.window.document.getElementById('scroll-to-top-btn'), 'no scroll-to-top button');
+  });
+
+  test('the footer note follows the language', async () => {
+    const dom = await bootPage();
+    dom.window.document.querySelector<HTMLButtonElement>('#toggle-language')!.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    assert.ok(text(dom, '.footer-note').startsWith("'랭킹 리스트'"));
+  });
+
+  test('a single-language config hides the language toggle', async () => {
+    const dom = await bootPage(template, withChrome("languages: ['en']"));
+    assert.equal(dom.window.document.getElementById('toggle-language'), null);
+    // The theme toggle is unaffected.
+    assert.ok(dom.window.document.getElementById('toggle-theme'));
+  });
+
+  test('chrome options turn the built-in controls off', async () => {
+    const dom = await bootPage(template, withChrome(
+      'chrome: { title: false, themeToggle: false, measurementsLink: false }',
+    ));
+    assert.equal(text(dom, '.header-title'), '');
+    assert.equal(dom.window.document.getElementById('toggle-theme'), null);
+    assert.equal(dom.window.document.getElementById('link-measurements-page'), null);
+  });
+
+  test('footer links are rendered from the config', async () => {
+    const dom = await bootPage(template, withChrome(
+      "chrome: { footer: { links: [{ href: 'https://example.com', label: 'My site', newTab: true }] } }",
+    ));
+    const link = dom.window.document.querySelector<HTMLAnchorElement>('.footer-bottom a')!;
+    assert.equal(link.textContent, 'My site');
+    assert.equal(link.getAttribute('href'), 'https://example.com');
+    assert.equal(link.target, '_blank');
+  });
+
+  test('a chrome config with nothing to say leaves no empty footer bar', async () => {
+    const dom = await bootPage(template, withChrome('chrome: {}'));
+    assert.equal(dom.window.document.querySelector<HTMLElement>('#ranking-footer')!.hidden, true);
   });
 
   test('the toggle switches every chrome string and card label to Korean', async () => {
@@ -293,7 +350,7 @@ describe('a pre-scale config', () => {
     ].join('\n');
     const withClassMap = config.slice(0, open) + replacement + config.slice(close);
     return withClassMap
-      .replace('configVersion: 2,', 'configVersion: 1,')
+      .replace('configVersion: 3,', 'configVersion: 1,')
       // Drop the scale-era declarations the replacement above now duplicates.
       .replace("\n\t\t\tfilter: { kind: 'select' },", '')
       .replace("\n\t\t\trender: { kind: 'rank-badge' },", '');

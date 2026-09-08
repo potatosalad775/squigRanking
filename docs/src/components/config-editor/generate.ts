@@ -201,6 +201,38 @@ function statsBlock(form: FormState, depth: number): string {
 	].join('\n');
 }
 
+/**
+ * The `chrome` block: the header title and the footer.
+ *
+ * index.html is three empty landmarks, so anything the form omits here is
+ * simply absent from the page rather than falling back to markup.
+ */
+function chromeBlock(form: FormState, depth: number): string {
+	const pad = indent(depth);
+	const inner = indent(depth + 1);
+	const lines = [
+		`${pad}// The header and footer. index.html carries no copy of its own.`,
+		`${pad}chrome: {`,
+	];
+	if (form.siteTitle.trim()) lines.push(`${inner}title: ${q(form.siteTitle.trim())},`);
+
+	const note = form.footerNoteEn.trim();
+	const link = form.footerLinkUrl.trim();
+	if (note || link) {
+		lines.push(`${inner}footer: {`);
+		if (note) {
+			lines.push(`${inner}${TAB}note: ${i18nString(note, form.footerNoteKo.trim(), form.korean)},`);
+		}
+		if (link) {
+			const label = q(form.footerLinkLabel.trim() || link);
+			lines.push(`${inner}${TAB}links: [{ href: ${q(link)}, label: ${label}, newTab: true }],`);
+		}
+		lines.push(`${inner}},`);
+	}
+	lines.push(`${pad}},`);
+	return lines.join('\n');
+}
+
 export function generateConfig(form: FormState): string {
 	const types = form.types.filter(t => t.enabled);
 	const columns = [
@@ -232,7 +264,7 @@ export function generateConfig(form: FormState): string {
 		'',
 		`/** @type {import('squig-ranking').RankingConfig} */`,
 		'window.RANKING_CONFIG = {',
-		`${indent(1)}configVersion: 2,`,
+		`${indent(1)}configVersion: 3,`,
 		'',
 		`${indent(1)}types: {`,
 		types.map(t => typeBlock(t, form.korean, 2)).join('\n'),
@@ -252,6 +284,8 @@ export function generateConfig(form: FormState): string {
 		sortBlock(form, 1),
 		'',
 		statsBlock(form, 1),
+		'',
+		chromeBlock(form, 1),
 		'',
 		`${indent(1)}deepLink: {`,
 		`${indent(2)}template: ${q(form.deepLinkTemplate)},`,

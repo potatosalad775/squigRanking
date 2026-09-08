@@ -30,7 +30,8 @@ function apply(theme: Theme): void {
   document.documentElement.setAttribute('data-theme', theme);
 }
 
-export function setupTheme(button: HTMLElement | null): void {
+/** Apply the theme for this page view. Call once, as early as possible. */
+export function setupTheme(): void {
   const stored = read();
   apply(stored ?? systemTheme());
 
@@ -41,11 +42,15 @@ export function setupTheme(button: HTMLElement | null): void {
       if (!read()) apply(event.matches ? 'dark' : 'light');
     });
   }
+}
 
-  button?.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-    const next: Theme = current === 'dark' ? 'light' : 'dark';
-    apply(next);
-    write(next);
-  });
+/**
+ * Flip to the other theme and remember the choice. Exported rather than bound
+ * to a button here, because the header button is rebuilt on language changes.
+ */
+export function toggleTheme(): void {
+  const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const next: Theme = current === 'dark' ? 'light' : 'dark';
+  apply(next);
+  write(next);
 }

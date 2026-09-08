@@ -69,6 +69,16 @@ for (const preset of PRESETS) {
     }
   });
 
+  test(`the editor's ${preset} output carries the page chrome`, () => {
+    // index.html has no title and no footer of its own, so a config the editor
+    // produces has to supply both or the page ships blank ones.
+    const config = evaluate(generateConfig(presetState(preset)));
+    assert.equal(config.chrome?.title, 'SquigRanking');
+    const note = config.chrome?.footer?.note;
+    assert.ok(note && !Array.isArray(note) && typeof note !== 'string' && note.default);
+    assert.ok(note.i18n?.['ko'], 'the Korean footer note is missing');
+  });
+
   test(`a ${preset} config survives a round trip through the importer`, () => {
     const first = generateConfig(presetState(preset));
     const result = parseConfig(first);

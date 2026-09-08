@@ -176,7 +176,39 @@
 	</section>
 
 	<section class="panel">
-		<h2>5. Take the file</h2>
+		<h2>5. Name your page</h2>
+		<label class="field wide">
+			<span>Header title</span>
+			<input type="text" bind:value={form.siteTitle} placeholder="Leave blank for no title" />
+		</label>
+		<label class="field wide">
+			<span>Footer note</span>
+			<textarea rows="2" bind:value={form.footerNoteEn}></textarea>
+		</label>
+		{#if form.korean}
+			<label class="field wide">
+				<span>Footer note (Korean)</span>
+				<textarea rows="2" bind:value={form.footerNoteKo}></textarea>
+			</label>
+		{/if}
+		<div class="options">
+			<label class="field">
+				<span>Footer link text</span>
+				<input type="text" bind:value={form.footerLinkLabel} placeholder="My measurements" />
+			</label>
+			<label class="field">
+				<span>Footer link URL</span>
+				<input type="url" bind:value={form.footerLinkUrl} spellcheck="false" placeholder="https://" />
+			</label>
+		</div>
+		<p class="note">
+			These go in the config, not in <code>index.html</code>. That file is three empty landmarks
+			the page fills in, so this is the only place the wording lives.
+		</p>
+	</section>
+
+	<section class="panel">
+		<h2>6. Take the file</h2>
 
 		{#if problems.length}
 			<div class="problems" role="status">

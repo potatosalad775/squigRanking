@@ -34,6 +34,10 @@ interface LooseConfig {
 	stats?: { enabled?: boolean; average?: { denominator?: string } };
 	deepLink?: { template?: string };
 	languages?: string[];
+	chrome?: {
+		title?: unknown;
+		footer?: { note?: unknown; links?: Array<{ href?: string; label?: unknown }> };
+	};
 }
 
 /** Pull the English text out of either I18nString shape. */
@@ -151,6 +155,24 @@ export function parseConfig(source: string): ParseResult {
 		if (column.id && !known.has(column.id)) {
 			warnings.push(`The column "${column.id}" is a custom one, so it was left out. Add it back by hand.`);
 		}
+	}
+
+	// Chrome. A config that sets none of it imports as a page with no title and
+	// no footer, which is exactly what that config renders.
+	const chrome = config.chrome ?? {};
+	form.siteTitle = chrome.title === false ? '' : textOf(chrome.title, '').en;
+	const note = textOf(chrome.footer?.note, '');
+	form.footerNoteEn = note.en;
+	form.footerNoteKo = note.ko;
+	const footerLinks = chrome.footer?.links ?? [];
+	const firstLink = footerLinks[0];
+	form.footerLinkUrl = firstLink?.href ?? '';
+	form.footerLinkLabel = textOf(firstLink?.label, '').en;
+	if (footerLinks.length > 1) {
+		warnings.push('Only the first footer link was imported; the editor offers one. Add the rest by hand.');
+	}
+	if (Array.isArray(chrome.footer?.note)) {
+		warnings.push('Its footer note had several paragraphs; only the first was imported.');
 	}
 
 	form.korean = Boolean(config.languages?.includes('ko')) || config.columns!.some(c => c.i18nSource?.['ko']);

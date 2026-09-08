@@ -51,6 +51,12 @@ export interface FormState {
 	korean: boolean;
 	statsEnabled: boolean;
 	deepLinkTemplate: string;
+	/** Page chrome. index.html carries none of this, so the form has to. */
+	siteTitle: string;
+	footerNoteEn: string;
+	footerNoteKo: string;
+	footerLinkLabel: string;
+	footerLinkUrl: string;
 }
 
 let nextId = 0;
@@ -211,6 +217,15 @@ export function presetState(preset: string): FormState {
 		korean: true,
 		statsEnabled: true,
 		deepLinkTemplate: '{Brand}-{Model}',
+		siteTitle: 'SquigRanking',
+		footerNoteEn:
+			"The 'Ranking List' is based on the operator's personal listening experience " +
+			'and subjective evaluation of sound quality.',
+		footerNoteKo:
+			"'\uB7AD\uD0B9 \uB9AC\uC2A4\uD2B8'\uB294 \uC6B4\uC601\uC790\uC758 \uAC1C\uC778\uC801\uC778 \uCCAD\uC74C \uACBD\uD5D8\uACFC " +
+			'\uC74C\uC9C8\uC5D0 \uB300\uD55C \uC8FC\uAD00\uC801 \uD3C9\uAC00\uB97C \uBC14\uD0D5\uC73C\uB85C \uC791\uC131\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
+		footerLinkLabel: '',
+		footerLinkUrl: '',
 	};
 
 	if (preset === 'stars') {
@@ -303,6 +318,9 @@ export function validate(form: FormState): string[] {
 		}
 	}
 	if (form.scale.length < 2) problems.push('A scale needs at least two steps.');
+	if (form.footerLinkUrl.trim() && !form.footerLinkLabel.trim()) {
+		problems.push('The footer link has a URL but no text to show for it.');
+	}
 
 	const seen = new Set<string>();
 	for (const s of form.scale) {

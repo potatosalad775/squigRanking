@@ -1,5 +1,9 @@
 // Chrome strings. Shipped inside the bundle so a CDN-hosted core.js needs no
 // sibling files; operators override individual strings via RANKING_CONFIG.i18n.
+//
+// Only strings core itself writes live here. Operator copy — the header title,
+// the footer note — is `RANKING_CONFIG.chrome`, so there is one place to look
+// for it rather than two that both half-work.
 
 import { getConfig } from './config.ts';
 import type { Lang } from './types.ts';
@@ -24,9 +28,6 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     loadError: 'Could not load the ranking data. Check the source URL in ranking-config.js.',
     ascending: 'A to Z',
     descending: 'Z to A',
-    footerNote:
-      "The 'Ranking List' is based on the operator's personal listening experience " +
-      'and subjective evaluation of sound quality.',
   },
   ko: {
     filterAndSort: '필터 & 정렬',
@@ -47,7 +48,6 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     loadError: '랭킹 데이터를 불러오지 못했습니다. ranking-config.js의 소스 URL을 확인하세요.',
     ascending: '오름차순',
     descending: '내림차순',
-    footerNote: "'랭킹 리스트'는 운영자의 개인적인 청음 경험과 음질에 대한 주관적 평가를 바탕으로 작성되었습니다.",
   },
 };
 

@@ -33,7 +33,7 @@ Nothing at the root is deployable. The thing you host is `dist/`, which the buil
 | Path | What it is |
 |------|------------|
 | `src/` | The page's TypeScript. Bundled into one plain script. |
-| `site/` | The page shell: `index.html` and `style.css`. |
+| `site/` | The page shell: `index.html` and `style.css`. The HTML is three empty landmarks; core builds the header, footer and body from the config. |
 | `presets/` | Three rank styles, each a config plus matching `TEMPLATE.csv` and `TEMPLATE.xlsx`. `letter` is also the default config. |
 | `docs/` | The documentation site, the config editor and the phone book converter. Its own package. |
 | `test/` | Unit tests, plus a jsdom pass over the built bundle. |
@@ -66,7 +66,7 @@ src/
 ├── stats.ts          Rank chart; loads Chart.js on first open.
 ├── theme.ts          Light/dark preference.
 ├── dom.ts, icons.ts  Element helpers and SVG path data.
-├── render/           cards, blocks, controls, skeleton
+├── render/           chrome, modal, cards, blocks, controls, skeleton
 └── main.ts           Startup and event wiring.
 ```
 

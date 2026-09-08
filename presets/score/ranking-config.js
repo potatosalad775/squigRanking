@@ -9,7 +9,7 @@
 
 /** @type {import('squig-ranking').RankingConfig} */
 window.RANKING_CONFIG = {
-	configVersion: 2,
+	configVersion: 3,
 
 	types: {
 		earphone: {
@@ -176,6 +176,28 @@ window.RANKING_CONFIG = {
 	stats: {
 		enabled: true,
 		average: { source: 'Score', denominator: '10.00' },
+	},
+
+	// The page shell. index.html is three empty landmarks; everything visible in
+	// the header and footer is built from here, so branding the page never means
+	// editing markup.
+	chrome: {
+		title: 'SquigRanking',
+		// subtitle: 'IEM and headphone rankings',
+		// titleUrl: '../',
+		footer: {
+			note: {
+				default:
+					"The 'Ranking List' is based on the operator's personal listening " +
+					'experience and subjective evaluation of sound quality.',
+				i18n: {
+					ko: "'랭킹 리스트'는 운영자의 개인적인 청음 경험과 음질에 대한 주관적 평가를 바탕으로 작성되었습니다.",
+				},
+			},
+			// links: [
+			// 	{ href: 'https://example.com', label: 'My site', newTab: true },
+			// ],
+		},
 	},
 
 	deepLink: {

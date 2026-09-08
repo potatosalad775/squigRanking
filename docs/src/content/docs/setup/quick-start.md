@@ -55,6 +55,19 @@ source: {
 
 There are two because the page supports separate earphone and headphone lists. Using the same URL for both is fine if you keep everything in one sheet.
 
+While you are in there, set the header title and the footer note, a little further down:
+
+```js
+chrome: {
+	title: 'My Rankings',
+	footer: {
+		note: 'Rankings reflect my own listening.',
+	},
+},
+```
+
+`index.html` carries no wording of its own, so this is the only place it lives. See [`chrome`](/squigRanking/docs/config/reference/#chrome) for the header links and the rest of the options.
+
 :::tip
 Prefer not to edit code at all? The [config editor](/squigRanking/docs/config-editor/) builds this file from a form and hands you the finished text.
 :::
