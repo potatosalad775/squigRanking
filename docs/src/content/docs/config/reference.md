@@ -295,6 +295,31 @@ If you add markup of your own to `index.html`, `data-i18n="key"` on an element f
 
 ---
 
+## `cdn`
+
+Where the page loads its own build from. Read by `loader.js` before the bundle exists, so unlike every other key here it never reaches core. Every field is optional, and most deploys set none of them.
+
+```js
+cdn: {
+	majorVersion: 1,
+},
+```
+
+| key | default | meaning |
+|-----|---------|---------|
+| `source` | `'auto'` | `'auto'` follows `loader.js`: a copy in your own folder means the build is there too, the CDN copy means fetch the published one. `'local'` and `'cdn'` force it. |
+| `majorVersion` | highest published | Major version to track. Its newest patch is loaded on every visit. |
+| `version` | — | An exact build, e.g. `'1.4.2'`. Freezes the deploy and skips the version lookup. |
+| `base` | the project's jsDelivr URL | CDN base. Point it at your own mirror of the `cdn` branch. |
+| `versionsUrl` | derived from `base` | Full URL to `versions.json`. |
+| `debug` | `false` | Load the readable `core.js` instead of `core.min.js`. |
+
+Setting `majorVersion` is the usual choice: bug fixes arrive on their own, and a major bump never does. See [Deploying](/squigRanking/docs/setup/deploying/#staying-up-to-date).
+
+:::note
+`source: 'local'` only says *where* to look, not *which* build — the folder's `core.min.js` is whatever you last copied there. Version pinning is a CDN concept.
+:::
+
 ## Common edits
 
 ### Add a column (e.g. Price)

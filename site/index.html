@@ -19,15 +19,56 @@
 
 		<link rel="preconnect" href="https://cdn.jsdelivr.net">
 		<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
-		<link rel="stylesheet" href="style.css">
 
-		<!-- Config first, then core. Chart.js is loaded on demand by core.js. -->
-		<script defer src="ranking-config.js"></script>
-		<script defer src="core.js"></script>
+		<!--
+			Config first, and not deferred: the loader and core both read
+			window.RANKING_CONFIG, so it has to be set before either runs.
+		-->
+		<script src="ranking-config.js"></script>
+
+		<!--
+			The loader picks the build and injects it along with style.css, so
+			neither is named here and neither needs updating by hand.
+
+			A copy of loader.js in this folder wins; the CDN copy is the fallback.
+			That one choice is also what decides where the build comes from:
+
+			  loader.js present  → core.min.js and style.css from this folder.
+			    This is the release zip and `npm run build` output. Nothing is
+			    fetched from the CDN, so the page works offline.
+			  loader.js absent   → the latest published build, from jsDelivr.
+			    Copy just this file and ranking-config.js and bug fixes arrive
+			    on their own.
+
+			Pin or override any of it with `cdn` in ranking-config.js.
+		-->
+		<script>
+			(function () {
+				var CDN_LOADER = 'https://cdn.jsdelivr.net/gh/potatosalad775/squigRanking@cdn/loader.js';
+				var settled = false;
+
+				// Hosts that answer unknown paths with their index page hand back HTML
+				// with a 200, so a load event is not proof the loader ran. The flag it
+				// sets is, and checking it covers the 404 case too.
+				function useCdn() {
+					if (settled || window.__squigRankingLoader) return;
+					settled = true;
+					var remote = document.createElement('script');
+					remote.src = CDN_LOADER;
+					document.head.appendChild(remote);
+				}
+
+				var local = document.createElement('script');
+				local.src = 'loader.js';
+				local.onload = useCdn;
+				local.onerror = useCdn;
+				document.head.appendChild(local);
+			})();
+		</script>
 	</head>
 	<body>
 		<!--
-			core.js builds the header, the footer and everything between them from
+			core builds the header, the footer and everything between them from
 			ranking-config.js. Title, links, toggles and the footer note are all
 			configuration now, so this file only needs editing for the <head> above.
 

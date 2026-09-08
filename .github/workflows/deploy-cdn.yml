@@ -1,0 +1,156 @@
+name: Deploy CDN
+
+# Publishes a build to the `cdn` branch, which jsDelivr serves. This is what
+# makes deployed pages update themselves: they resolve a version from
+# versions.json on every load, so moving the pointer here moves every page that
+# has not pinned one.
+#
+# Manual on purpose. A push to main must not reach live deployments before
+# someone decides it should — that decision is this button.
+#
+# Does not create a GitHub Release; release.yml does that.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: 'Version override (defaults to package.json version)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  # Two runs would race on the same branch and one would push a versions.json
+  # written from a checkout that no longer exists.
+  group: deploy-cdn
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version_override }}" ]; then
+            VERSION="${{ github.event.inputs.version_override }}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major=${VERSION%%.*}" >> $GITHUB_OUTPUT
+          echo "Publishing v$VERSION (major ${VERSION%%.*})"
+
+      # The whole check, not just the build: this output goes straight to every
+      # deployed page, so a broken bundle here is a broken bundle everywhere.
+      - name: Build and verify
+        run: npm run check
+
+      # Fetch the branch's versions.json first so the publish adds a major
+      # rather than replacing the map. Missing means this is the first publish.
+      # The explicit refspec matters: a bare `git fetch origin cdn` only writes
+      # FETCH_HEAD, and the checkout action leaves no tracking ref for a branch
+      # it did not check out. Both the guard below and the publish step read
+      # origin/cdn, and would quietly treat the branch as new without it —
+      # replacing every published version with an orphan commit.
+      - name: Read the published version map
+        run: |
+          rm -f /tmp/versions.json
+          if ! git fetch origin cdn:refs/remotes/origin/cdn 2>/dev/null; then
+            echo "No cdn branch yet — this is the first publish."
+          elif git show origin/cdn:versions.json > /tmp/versions.json 2>/dev/null; then
+            echo "Current map: $(cat /tmp/versions.json)"
+          else
+            # The redirect leaves an empty file behind on failure, and an empty
+            # map is not the same thing as a missing one.
+            rm -f /tmp/versions.json
+            echo "cdn branch exists but carries no versions.json."
+          fi
+
+      - name: Stage the CDN payload
+        run: node scripts/build-cdn.js --version "${{ steps.version.outputs.version }}"
+        env:
+          SQUIG_VERSIONS_JSON: /tmp/versions.json
+
+      # A published version is immutable. Overwriting one would change the code
+      # under pages that already resolved it, which is the one thing versioning
+      # is supposed to prevent — so this fails rather than clobbers.
+      - name: Refuse to overwrite a published version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if git cat-file -e "origin/cdn:v${VERSION}/core.min.js" 2>/dev/null; then
+            echo "::error::v${VERSION} is already published. Bump the version in package.json."
+            exit 1
+          fi
+          echo "v${VERSION} is not published yet."
+
+      - name: Publish to the cdn branch
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # dist-cdn/ is about to be out of reach: it is untracked on main and a
+          # checkout of an orphan branch would leave it behind ambiguously.
+          cp -r dist-cdn /tmp/cdn-payload
+
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          if git show-ref --verify --quiet refs/remotes/origin/cdn; then
+            git checkout -B cdn origin/cdn
+          else
+            # An orphan branch: the cdn branch shares no history with main and
+            # carries none of its files, so jsDelivr serves only what we publish.
+            git checkout --orphan cdn
+            git rm -rf . > /dev/null 2>&1 || true
+          fi
+
+          cp -r /tmp/cdn-payload/. .
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing changed — already published."
+            exit 0
+          fi
+          git commit -m "cdn: publish v${VERSION}"
+          git push origin cdn
+
+      # jsDelivr caches versions.json and loader.js for hours. The versioned
+      # folders are immutable so they never need this, but these two are exactly
+      # the files whose whole job is to be current.
+      - name: Purge the jsDelivr cache
+        run: |
+          for file in versions.json loader.js; do
+            curl -sS "https://purge.jsdelivr.net/gh/${{ github.repository }}@cdn/$file" || true
+            echo ""
+          done
+
+      - name: Summary
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BASE="https://cdn.jsdelivr.net/gh/${{ github.repository }}@cdn"
+          {
+            echo "### Published v${VERSION}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Loader | \`${BASE}/loader.js\` |"
+            echo "| Build | \`${BASE}/v${VERSION}/core.min.js\` |"
+            echo "| Versions | \`${BASE}/versions.json\` |"
+            echo ""
+            echo "Pages tracking major ${{ steps.version.outputs.major }} pick this up on their next load."
+          } >> $GITHUB_STEP_SUMMARY

@@ -1,6 +1,6 @@
 ---
 title: 'Quick start'
-description: 'Get a ranking page live in about fifteen minutes, from copying the spreadsheet template to uploading four files.'
+description: 'Get a ranking page live in about fifteen minutes, from copying the spreadsheet template to uploading two files.'
 sidebar:
   order: 1
 ---
@@ -33,14 +33,14 @@ Publishing to web makes the sheet's contents readable by anyone with the link. T
 
 ## 3. Download the page
 
-Grab the latest release and unzip it. You need four files:
+Grab the latest release and unzip it. You need two files out of it:
 
 ```
 index.html
-style.css
-core.js
 ranking-config.js
 ```
+
+The page fetches the rest — the script and the stylesheet — as it loads, and picks up bug fixes on its own. If you would rather host every file yourself, [Deploying](/squigRanking/docs/setup/deploying/#self-hosting-the-build) covers that; the rest of this page is the same either way.
 
 ## 4. Point the config at your sheet
 
@@ -74,13 +74,13 @@ Prefer not to edit code at all? The [config editor](/squigRanking/docs/config-ed
 
 ## 5. Upload
 
-Put the four files in a `ranking/` folder next to your existing measurement site:
+Put both files in a `ranking/` folder next to your existing measurement site:
 
 ```
 your-squig-site/
 ├── index.html            ← your CrinGraph or modernGraphTool page
 ├── data/phone_book.json
-└── ranking/              ← the four files go here
+└── ranking/              ← the two files go here
 ```
 
 Open `your-site.com/ranking/` and the page should list your devices.

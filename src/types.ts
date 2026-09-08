@@ -243,6 +243,31 @@ export interface DeepLinkConfig {
   slugify?: 'lowercase-hyphen' | 'none';
 }
 
+/**
+ * Where the page loads its own build from. Read by loader.js before core exists,
+ * so nothing here reaches core — it is declared for the editor's benefit.
+ *
+ * The defaults suit both deploys, and most operators never set any of it.
+ */
+export interface CdnConfig {
+  /**
+   * `'auto'` (default) follows loader.js: a copy in your own folder means the
+   * build is there too, the CDN copy means fetch the published build. Override
+   * with `'local'` or `'cdn'` when you mix the two.
+   */
+  source?: 'auto' | 'local' | 'cdn';
+  /** Exact version to load, e.g. `'1.2.3'`. Skips the version lookup entirely. */
+  version?: string;
+  /** Major version to track. Defaults to the highest published. */
+  majorVersion?: number;
+  /** CDN base URL. Defaults to the project's jsDelivr URL. */
+  base?: string;
+  /** Full URL to versions.json. Defaults to the raw GitHub equivalent of `base`. */
+  versionsUrl?: string;
+  /** Load the readable `core.js` rather than `core.min.js`. */
+  debug?: boolean;
+}
+
 export interface RankingConfig {
   /** Schema version this config targets. Core warns when it does not match. */
   configVersion?: number;
@@ -258,6 +283,8 @@ export interface RankingConfig {
   languages?: Lang[];
   /** Overrides for built-in chrome strings, keyed by language then string id. */
   i18n?: Record<Lang, Record<string, string>>;
+  /** Where the page loads its own build from. Read by loader.js, not by core. */
+  cdn?: CdnConfig;
 }
 
 declare global {

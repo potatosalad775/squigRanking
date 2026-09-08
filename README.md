@@ -10,7 +10,7 @@ A page in the wild: [Earphones Archive Ranking](https://earphonesarchive.squig.l
 
 ## Using it
 
-Download the latest release, copy four files into a `ranking/` folder next to your measurement site, and point `ranking-config.js` at your published sheet. That is the whole deployment: no build step on the server and nothing to install.
+Download the latest release, copy `index.html` and `ranking-config.js` into a `ranking/` folder next to your measurement site, and point the config at your published sheet. That is the whole deployment: no build step on the server, nothing to install, and the page pulls its own updates. [Self-hosting](https://potatosalad775.github.io/squigRanking/docs/setup/deploying/#self-hosting-the-build) the script and stylesheet is three more files and no CDN.
 
 The **[quick start](https://potatosalad775.github.io/squigRanking/docs/setup/quick-start/)** walks through it in about fifteen minutes, including publishing a Google Sheet as CSV. The **[config editor](https://potatosalad775.github.io/squigRanking/docs/config-editor/)** builds the config file from a form if you would rather not edit code.
 
@@ -34,11 +34,13 @@ Nothing at the root is deployable. The thing you host is `dist/`, which the buil
 |------|------------|
 | `src/` | The page's TypeScript. Bundled into one plain script. |
 | `site/` | The page shell: `index.html` and `style.css`. The HTML is three empty landmarks; core builds the header, footer and body from the config. |
+| `cdn/` | `loader.js`, which resolves a version and injects the build. Published to the `cdn` branch, and copied into `dist/` so a self-hosted folder needs nothing else. |
 | `presets/` | Three rank styles, each a config plus matching `TEMPLATE.csv` and `TEMPLATE.xlsx`. `letter` is also the default config. |
 | `docs/` | The documentation site, the config editor and the phone book converter. Its own package. |
 | `test/` | Unit tests, plus a jsdom pass over the built bundle. |
-| `scripts/` | The deploy-folder assembler and the spreadsheet generator. |
-| `dist/` | Build output. Not committed. |
+| `scripts/` | The deploy-folder assembler, the CDN payload stager and the spreadsheet generator. |
+| `dist/` | Build output, and a complete self-hosted deploy folder. Not committed. |
+| `dist-cdn/` | What `npm run build:cdn` stages for the `cdn` branch. Not committed. |
 
 ---
 

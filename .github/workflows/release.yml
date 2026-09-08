@@ -65,9 +65,13 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
           body: |
-            Download the zip, copy `index.html`, `style.css`, `core.js` and
-            `ranking-config.js` into your `ranking/` folder, then point
-            `ranking-config.js` at your published sheet.
+            Copy `index.html` and `ranking-config.js` out of the zip into your
+            `ranking/` folder, then point the config at your published sheet.
+            The page loads the rest from the CDN and keeps itself current.
+
+            To host every file yourself instead, copy `loader.js`, `core.min.js`
+            and `style.css` across too — `loader.js` next to the page means the
+            build is read from that folder and the CDN is never contacted.
 
             Other rank styles are in `presets/`. Setup guide:
             https://potatosalad775.github.io/squigRanking/docs/setup/quick-start/

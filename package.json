@@ -18,10 +18,12 @@
     "dist",
     "presets",
     "site",
+    "cdn",
     "README.md"
   ],
   "scripts": {
     "build": "rolldown -c && tsc -p tsconfig.build.json && node scripts/bundle.mjs",
+    "build:cdn": "npm run build && node scripts/build-cdn.js",
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run test && npm run build",

@@ -61,6 +61,11 @@ jobs:
       - name: Test
         run: npm test
 
+      # The CDN payload is only ever staged by a manual deploy, so without this
+      # a broken stager would surface at the moment someone needs to publish.
+      - name: Stage the CDN payload
+        run: node scripts/build-cdn.js
+
       - name: Build docs
         working-directory: ./docs
         run: npm run build
