@@ -2,7 +2,7 @@
 
 A static, config-driven ranking page for CrinGraph and modernGraphTool squig deployments. Your reviews live in a spreadsheet; the page reads it and renders filterable, sortable, deep-linkable cards with rank badges and review notes.
 
-**[Documentation](https://potatosalad775.github.io/squigRanking/docs/)** · **[Quick start](https://potatosalad775.github.io/squigRanking/docs/setup/quick-start/)** · **[Config editor](https://potatosalad775.github.io/squigRanking/docs/config-editor/)** · **[Live demo](https://potatosalad775.github.io/squigRanking/)**
+**[Documentation](https://potatosalad775.github.io/squigRanking/docs/)** · **[Quick start](https://potatosalad775.github.io/squigRanking/docs/setup/quick-start/)** · **[Config editor](https://potatosalad775.github.io/squigRanking/docs/config-editor/)** · **[Phone book converter](https://potatosalad775.github.io/squigRanking/docs/phonebook-converter/)** · **[Live demo](https://potatosalad775.github.io/squigRanking/)**
 
 A page in the wild: [Earphones Archive Ranking](https://earphonesarchive.squig.link/ranking).
 
@@ -35,7 +35,7 @@ Nothing at the root is deployable. The thing you host is `dist/`, which the buil
 | `src/` | The page's TypeScript. Bundled into one plain script. |
 | `site/` | The page shell: `index.html` and `style.css`. |
 | `presets/` | Three rank styles, each a config plus matching `TEMPLATE.csv` and `TEMPLATE.xlsx`. `letter` is also the default config. |
-| `docs/` | The documentation site and the config editor. Its own package. |
+| `docs/` | The documentation site, the config editor and the phone book converter. Its own package. |
 | `test/` | Unit tests, plus a jsdom pass over the built bundle. |
 | `scripts/` | The deploy-folder assembler and the spreadsheet generator. |
 | `dist/` | Build output. Not committed. |
@@ -70,7 +70,7 @@ src/
 └── main.ts           Startup and event wiring.
 ```
 
-The docs site is a separate package. Its config editor is covered by `test/editor.test.ts` here, which asserts that what the editor generates is something `core.js` actually reads:
+The docs site is a separate package. Its two browser tools are covered by tests here rather than there, because what they produce has to line up with things they cannot see. `test/editor.test.ts` asserts that the config the editor generates is something `core.js` actually reads; `test/phonebook-converter.test.ts` asserts that the converter's header row matches the shipped `TEMPLATE.csv`, and that every row it writes still resolves to its own measurement through `src/phonebook.ts`:
 
 ```bash
 cd docs && npm install && npm run dev

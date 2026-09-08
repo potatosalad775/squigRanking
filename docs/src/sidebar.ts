@@ -11,6 +11,11 @@ export const sidebar: StarlightUserConfig['sidebar'] = [
 		items: [
 			{ slug: 'setup/quick-start' },
 			{ slug: 'setup/your-sheet' },
+			{
+				label: 'Phone book converter',
+				translations: { ko: 'phone_book.json 변환기' },
+				link: '/phonebook-converter/',
+			},
 			{ slug: 'setup/deploying' },
 		],
 	},

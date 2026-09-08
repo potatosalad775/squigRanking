@@ -23,6 +23,10 @@ Each part of a review lives in its own column. There is no markup to learn and n
 
 `Score` is optional because a rank scale can say what each grade is worth. A sheet with only `Brand`, `Model` and `Rank` still sorts by score and still shows an average. See [How a scale works](/squigRanking/docs/ranks/scale/).
 
+## Starting from your phone book
+
+`Brand` and `Model` are exactly what your measurement site already lists. Rather than retyping a few hundred of them, feed your `phone_book.json` to the [phone book converter](/squigRanking/docs/phonebook-converter/): it reads both the CrinGraph and the modernGraphTool dialect, lets you uncheck what you do not want ranked, and hands back rows with the same header as the template above. If your phone book already carries `reviewScore` values, it can seed the `Rank` column from them too.
+
 ## What is in the workbook
 
 If you started from the spreadsheet template rather than a bare CSV, it has three tabs.

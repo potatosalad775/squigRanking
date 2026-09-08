@@ -1,0 +1,23 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import PhonebookConverter from '../components/phonebook-converter/PhonebookConverter.svelte';
+---
+
+<StarlightPage
+	frontmatter={{
+		title: 'Phone book converter',
+		description:
+			'Turn a CrinGraph or modernGraphTool phone_book.json into the rows of a ranking sheet. Fetch the file, trim the list, and take the spreadsheet.',
+		template: 'splash',
+		tableOfContents: false,
+	}}
+>
+	{/*
+		Same `.not-content` opt-out as the config editor: Starlight's prose spacing
+		would put every button in a row on its own line. `template: 'splash'`
+		renders the <h1>, so there is no heading here.
+	*/}
+	<div class="ce-root not-content">
+		<PhonebookConverter client:load />
+	</div>
+</StarlightPage>

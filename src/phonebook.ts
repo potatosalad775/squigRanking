@@ -11,11 +11,21 @@ export interface PhonebookPhone {
   file?: string | string[];
   prefix?: string;
   suffix?: string;
+  /** modernGraphTool's sample sets. Read only for the filename they carry. */
+  variants?: Array<{ file?: string; samples?: { files?: string[] } }>;
+  /** The deprecated predecessor of `variants`. Same reason, same depth. */
+  hptfs?: Array<{ files?: string[] }>;
 }
+
+/**
+ * A phone book may list a device as a bare name. Both graph tools read that as
+ * "the display name and the measurement filename are the same string".
+ */
+export type PhonebookEntry = string | PhonebookPhone;
 
 export interface PhonebookBrand {
   name?: string;
-  phones?: PhonebookPhone[];
+  phones?: PhonebookEntry[];
 }
 
 export type Phonebook = PhonebookBrand[];
@@ -55,6 +65,11 @@ function findBy<T>(items: T[], needle: string, nameOf: (item: T) => string): T |
   )?.item;
 }
 
+/** The terse form expanded, so only one shape reaches the matcher. */
+function asPhone(entry: PhonebookEntry): PhonebookPhone {
+  return typeof entry === 'string' ? { name: entry, file: entry } : entry;
+}
+
 function findPhone(phones: PhonebookPhone[], model: string): PhonebookPhone | undefined {
   const direct = findBy(phones, model, phone => phone.name ?? '');
   if (direct) return direct;
@@ -66,11 +81,25 @@ function findPhone(phones: PhonebookPhone[], model: string): PhonebookPhone | un
   });
 }
 
-/** The first measurement filename for a phonebook entry. */
+/**
+ * The first measurement filename for a phonebook entry.
+ *
+ * `file` wins whenever it is there, because that is the variant both graph tools
+ * draw first. A modernGraphTool phone can declare its measurements only in
+ * `variants[]` or the deprecated `hptfs[]`, and those are read next so such a
+ * device still gets a measurement link instead of silently losing one.
+ */
 export function phoneFile(phone: PhonebookPhone): string | null {
-  const raw = Array.isArray(phone.file) ? phone.file[0] : phone.file;
-  const trimmed = String(raw ?? '').trim();
-  return trimmed || null;
+  const candidates = [
+    Array.isArray(phone.file) ? phone.file[0] : phone.file,
+    phone.hptfs?.[0]?.files?.[0],
+    phone.variants?.[0]?.file ?? phone.variants?.[0]?.samples?.files?.[0],
+  ];
+  for (const candidate of candidates) {
+    const trimmed = String(candidate ?? '').trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
 }
 
 /**
@@ -88,7 +117,7 @@ export function resolveMeasurementUrl(
   const matchedBrand = findBy(phonebook, brandKey, entry => entry.name ?? '');
   if (!matchedBrand) return null;
 
-  const matchedPhone = findPhone(matchedBrand.phones ?? [], modelKey);
+  const matchedPhone = findPhone((matchedBrand.phones ?? []).map(asPhone), modelKey);
   if (!matchedPhone) return null;
 
   const file = phoneFile(matchedPhone);
