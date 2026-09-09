@@ -12,7 +12,7 @@ The authoritative definition is [`src/types.ts`](https://github.com/potatosalad7
 ## `configVersion`
 
 ```js
-configVersion: 3,
+configVersion: 4,
 ```
 
 The schema version this file targets. Core warns when a config declares a version newer than it understands, so a stale `core.js` after a CDN major bump says so in the console instead of silently half-working. An older config raises no warning: it still works. Optional, but recommended.
@@ -22,6 +22,7 @@ The schema version this file targets. Core warns when a config declares a versio
 | 1       | the original schema                                                          |
 | 2       | `scale` on the rank column, and the `stars` and `score-badge` renderers      |
 | 3       | `chrome`: the header and footer moved out of `index.html` and into the config |
+| 4       | the named form of `languages`, which the language button's tooltip is built from |
 
 ---
 
@@ -196,7 +197,7 @@ Add `blockLabel` to prefix the block with a bold heading (`blockLabel: { default
 i18nSource: { en: 'Comment', ko: 'Comment_KR' },
 ```
 
-The page reads the header for the active language, and falls back to `source` when that cell is blank. Half-translated sheets degrade to English per row rather than showing gaps.
+The page reads the header for the active language, and falls back to `source` when that cell is blank, so a half-translated sheet degrades per row rather than showing gaps. The header names are yours: `Comment_KR` is what the template happens to use, not something core looks for. See [`languages` and `i18n`](#languages-and-i18n) for the rest of what a second language needs.
 
 ---
 
@@ -276,20 +277,44 @@ What stays in `index.html` is the `<head>`: `<title>`, the `og:` tags, the canon
 
 ## `languages` and `i18n`
 
-Interface strings ship inside the bundle in English and Korean. Override any of them, or add a language:
+`languages` declares what the language toggle cycles through, in order:
 
 ```js
-languages: ['en', 'ko', 'ja'],
+languages: { en: 'English', ko: 'Korean', ja: 'Japanese' },
+```
+
+Name them. The language button's tooltip names the language it moves to, and core builds that sentence out of these names — "View in Japanese" on the Korean page, "View in English" on the Japanese one.
+
+`i18n` overrides the interface strings themselves. They ship inside the bundle in English and Korean, so this is for a third language, or for rewording one of the two:
+
+```js
 i18n: {
   ja: { filterAndSort: 'フィルターと並べ替え', resetFilters: 'リセット' },
 },
 ```
 
-The toggle button cycles through `languages` in order. Any string you do not override falls back to the built-in value, then to English. Available keys: `filterAndSort`, `resetFilters`, `search`, `sortBy`, `all`, `statsTitle`, `averageScore`, `deviceCount`, `closeStats`, `openStats`, `measurementsPage`, `toggleTheme`, `toggleLanguage`, `scrollTop`, `noResults`, `loadError`, `ascending`, `descending`.
+Any string you do not override falls back to the built-in value, then to English, one string at a time — a language with two keys filled in works, with the rest in English. Available keys: `filterAndSort`, `resetFilters`, `search`, `sortBy`, `all`, `statsTitle`, `averageScore`, `deviceCount`, `closeStats`, `openStats`, `measurementsPage`, `toggleTheme`, `toggleLanguage`, `scrollTop`, `noResults`, `loadError`, `ascending`, `descending`.
 
-Only strings core writes itself live here. Your own wording — the header title, the footer note — belongs in [`chrome`](#chrome), which takes an `I18nString` for each and so carries its own translations.
+`toggleLanguage` is the one you rarely need. It is derived from the names above, in English; set it only to word the tooltip in the language itself — `i18n: { ja: { toggleLanguage: '英語で表示' } }`. An explicit value always wins over the derived one.
+
+### What a new language touches
+
+Nothing in the page enumerates languages — a tag is supported exactly as far as your config carries it. For a language beyond the built-in two:
+
+- `languages` — the tag and its name, in cycle order.
+- `columns[].i18nSource` — the CSV header holding that language's text, for each translated column.
+- Every `I18nString` in the file — column `label` and `blockLabel`, `scale[].label`, type labels, `sort.labels`, `search.label`, `chrome.title`, `footer.note`, link labels — takes `i18n: { ja: '...' }` alongside its `default`.
+- `i18n` — the interface strings, if you want them out of English.
+
+The [config editor](/squigRanking/docs/config-editor/) writes all of it: add a tag, a name and a column suffix in its language step and it fills in `languages`, the `i18nSource` entries, and a box for every piece of wording and every interface string. Korean comes pre-filled; anything else starts empty and falls back to English until you type in it.
+
+### How a reader's language is chosen
+
+Stored choice from a previous visit, else the first entry in `languages` matching `navigator.languages` (`ja-JP` matches a declared `ja`), else the first entry in the list. The choice is kept in `localStorage` under `preferred-lang`.
 
 Declaring a single language hides the language toggle, since there is nothing to switch to. Set `chrome.languageToggle: true` to show it anyway.
+
+Only strings core writes itself live in `i18n`. Your own wording — the header title, the footer note — belongs in [`chrome`](#chrome), which takes an `I18nString` for each and so carries its own translations.
 
 If you add markup of your own to `index.html`, `data-i18n="key"` on an element fills it from this table; `data-i18n-title` and `data-i18n-label` do the same for the `title` and `aria-label` attributes.
 
@@ -350,6 +375,10 @@ Add `showForTypes: ['headphone']`.
 ### Translate a label
 
 Inline on the column: `label: { default: 'Rank', i18n: { ko: '등급', ja: 'ランク' } }`.
+
+### Add a language
+
+Name the tag in `languages`, give each translated column an `i18nSource` entry, and add the tag to every `I18nString`. [`languages` and `i18n`](#languages-and-i18n) walks through it.
 
 ---
 

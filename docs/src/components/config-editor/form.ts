@@ -19,7 +19,6 @@ export interface TypeForm {
 	id: string;
 	enabled: boolean;
 	labelEn: string;
-	labelKo: string;
 	url: string;
 	phonebook: string;
 	measurementUrl: string;
@@ -30,10 +29,32 @@ export interface ColumnToggle {
 	id: string;
 	header: string;
 	labelEn: string;
-	labelKo: string;
 	enabled: boolean;
 	/** Shown in the form so an operator knows what the column does. */
 	hint: string;
+}
+
+/**
+ * One language beyond English, which is always the base.
+ *
+ * `text` holds the operator's own wording keyed by slot id (see
+ * `translationSlots`); `strings` holds overrides for the interface strings core
+ * writes itself. Both are sparse: an empty entry is left out of the output and
+ * the page falls back, so a half-filled language is a working language.
+ */
+export interface LanguageForm {
+	/** Stable key for the keyed each block; never written to the output. */
+	id: string;
+	/** BCP 47 tag, e.g. `ko`. Written into `languages` and every `i18n` map. */
+	tag: string;
+	/** English name of the language. Shown in the form, and used for `View in ...`. */
+	name: string;
+	/** Suffix on this language's CSV headers, e.g. `_KR` for `Comment_KR`. */
+	suffix: string;
+	/** Operator wording, keyed by slot id. */
+	text: Record<string, string>;
+	/** Interface string overrides, keyed by the ids in `INTERFACE_STRINGS`. */
+	strings: Record<string, string>;
 }
 
 export interface FormState {
@@ -45,16 +66,15 @@ export interface FormState {
 	scoreDecimals: number;
 	scale: ScaleStep[];
 	rankLabelEn: string;
-	rankLabelKo: string;
 	types: TypeForm[];
 	columns: ColumnToggle[];
-	korean: boolean;
+	/** Languages beyond English, in the order the toggle cycles through them. */
+	languages: LanguageForm[];
 	statsEnabled: boolean;
 	deepLinkTemplate: string;
 	/** Page chrome. index.html carries none of this, so the form has to. */
 	siteTitle: string;
 	footerNoteEn: string;
-	footerNoteKo: string;
 	footerLinkLabel: string;
 	footerLinkUrl: string;
 }
@@ -105,7 +125,6 @@ function defaultTypes(): TypeForm[] {
 			id: 'earphone',
 			enabled: true,
 			labelEn: 'Earphones',
-			labelKo: '이어폰',
 			url: DEMO_SHEET,
 			phonebook: '../data/phone_book.json',
 			measurementUrl: '../?share={file}',
@@ -115,7 +134,6 @@ function defaultTypes(): TypeForm[] {
 			id: 'headphone',
 			enabled: true,
 			labelEn: 'Headphones',
-			labelKo: '헤드폰',
 			url: DEMO_SHEET,
 			phonebook: '../headphones/data/phone_book.json',
 			measurementUrl: '../headphones/?share={file}',
@@ -130,7 +148,6 @@ function defaultColumns(): ColumnToggle[] {
 			id: 'driver',
 			header: 'Driver',
 			labelEn: 'Driver',
-			labelKo: '드라이버',
 			enabled: true,
 			hint: 'Hybrid, DD, BA, planar. A chip in the meta row, with a dropdown filter built from your rows.',
 		},
@@ -138,7 +155,6 @@ function defaultColumns(): ColumnToggle[] {
 			id: 'style',
 			header: 'Style',
 			labelEn: 'Style',
-			labelKo: '형태',
 			enabled: true,
 			hint: 'Open, closed, IEM, earbud. A chip in the meta row, with its own dropdown filter.',
 		},
@@ -146,7 +162,6 @@ function defaultColumns(): ColumnToggle[] {
 			id: 'comment',
 			header: 'Comment',
 			labelEn: 'Comment',
-			labelKo: '코멘트',
 			enabled: true,
 			hint: 'The main paragraph of the review.',
 		},
@@ -154,7 +169,6 @@ function defaultColumns(): ColumnToggle[] {
 			id: 'pros',
 			header: 'Pros',
 			labelEn: 'Pros',
-			labelKo: '장점',
 			enabled: true,
 			hint: 'A green block. One point per line.',
 		},
@@ -162,7 +176,6 @@ function defaultColumns(): ColumnToggle[] {
 			id: 'cons',
 			header: 'Cons',
 			labelEn: 'Cons',
-			labelKo: '단점',
 			enabled: true,
 			hint: 'A red block. One point per line.',
 		},
@@ -170,7 +183,6 @@ function defaultColumns(): ColumnToggle[] {
 			id: 'notes',
 			header: 'Notes',
 			labelEn: 'Notes',
-			labelKo: '추가 의견',
 			enabled: true,
 			hint: 'A muted block for caveats and measurement remarks.',
 		},
@@ -178,7 +190,6 @@ function defaultColumns(): ColumnToggle[] {
 			id: 'tags',
 			header: 'Tags',
 			labelEn: 'Tags',
-			labelKo: '태그',
 			enabled: true,
 			hint: 'Comma-separated pills, also covered by search.',
 		},
@@ -186,11 +197,237 @@ function defaultColumns(): ColumnToggle[] {
 			id: 'score',
 			header: 'Score',
 			labelEn: 'Score',
-			labelKo: '점수',
 			enabled: true,
 			hint: 'A numeric column in your sheet. Turn it off to let the rank scale supply the score.',
 		},
 	];
+}
+
+// --- Languages ---------------------------------------------------------------
+
+/**
+ * The interface strings core writes itself, with their English text.
+ *
+ * Duplicated from `src/i18n.ts` for the same reason the color math below is:
+ * the docs site builds without the root package. A test asserts the two lists
+ * stay identical, so a string added to core surfaces here rather than quietly
+ * going untranslatable.
+ */
+export const INTERFACE_STRINGS: Array<{ key: string; en: string; hint?: string }> = [
+	{
+		key: 'toggleLanguage',
+		en: 'View in Korean',
+		hint: 'The tooltip on the language button. Built from the names above unless you word it yourself.',
+	},
+	{ key: 'filterAndSort', en: 'Filter & Sort' },
+	{ key: 'resetFilters', en: 'Reset Filters' },
+	{ key: 'search', en: 'Search' },
+	{ key: 'sortBy', en: 'Sort by' },
+	{ key: 'all', en: 'All' },
+	{ key: 'statsTitle', en: 'Ranking Statistics' },
+	{ key: 'averageScore', en: 'Average Score:' },
+	{ key: 'deviceCount', en: 'Device Count' },
+	{ key: 'closeStats', en: 'Close statistics' },
+	{ key: 'openStats', en: 'Open statistics' },
+	{ key: 'measurementsPage', en: 'Go to Measurements Page' },
+	{ key: 'toggleTheme', en: 'Toggle Light/Dark Theme' },
+	{ key: 'scrollTop', en: 'Scroll to top' },
+	{ key: 'noResults', en: 'No devices match the current filters.' },
+	{
+		key: 'loadError',
+		en: 'Could not load the ranking data. Check the source URL in ranking-config.js.',
+	},
+	{ key: 'ascending', en: 'A to Z' },
+	{ key: 'descending', en: 'Z to A' },
+];
+
+/** Languages whose interface strings ship inside the bundle. */
+export const BUILT_IN_LANGUAGES = ['en', 'ko'];
+
+/** Offered by the add-a-language menu. Only the tag and the suffix reach the output. */
+export const LANGUAGE_PRESETS: Array<{ tag: string; name: string; suffix: string }> = [
+	{ tag: 'ko', name: 'Korean', suffix: '_KR' },
+	{ tag: 'ja', name: 'Japanese', suffix: '_JA' },
+	{ tag: 'zh', name: 'Chinese', suffix: '_ZH' },
+	{ tag: 'es', name: 'Spanish', suffix: '_ES' },
+	{ tag: 'fr', name: 'French', suffix: '_FR' },
+	{ tag: 'de', name: 'German', suffix: '_DE' },
+	{ tag: 'pt', name: 'Portuguese', suffix: '_PT' },
+	{ tag: 'ru', name: 'Russian', suffix: '_RU' },
+];
+
+/** English text for the labels the generator writes without asking the form. */
+export const FIXED_LABELS: Record<string, string> = {
+	device: 'Device',
+	brand: 'Brand',
+	model: 'Model',
+	measurement: 'View Measurement',
+	search: 'Search',
+};
+
+/**
+ * English sort labels. `{rank}` is replaced with the rank column's label in the
+ * language being written, so renaming the rank column renames its sort options
+ * in every language at once.
+ */
+export const SORT_PATTERNS: Record<string, string> = {
+	'rank-asc': '{rank} (Best First)',
+	'rank-desc': '{rank} (Worst First)',
+	'score-desc': 'Score (High to Low)',
+	'score-asc': 'Score (Low to High)',
+};
+
+/** What the editor knows how to say in Korean. Every other language starts blank. */
+const KOREAN_TEXT: Record<string, string> = {
+	rank: '등급',
+	'type:earphone': '이어폰',
+	'type:headphone': '헤드폰',
+	'column:driver': '드라이버',
+	'column:style': '형태',
+	'column:comment': '코멘트',
+	'column:pros': '장점',
+	'column:cons': '단점',
+	'column:notes': '추가 의견',
+	'column:tags': '태그',
+	'column:score': '점수',
+	device: '기기',
+	brand: '브랜드',
+	model: '모델',
+	measurement: '측정 보기',
+	search: '검색',
+	'sort:rank-asc': '{rank}순 (높은 순)',
+	'sort:rank-desc': '{rank}순 (낮은 순)',
+	'sort:score-desc': '점수순 (높은 순)',
+	'sort:score-asc': '점수순 (낮은 순)',
+	footerNote:
+		"'랭킹 리스트'는 운영자의 개인적인 청음 경험과 " +
+		'음질에 대한 주관적 평가를 바탕으로 작성되었습니다.',
+};
+
+let nextLangId = 0;
+
+/** A language row. Korean arrives with the wording the editor already knows. */
+export function language(tag: string, name: string, suffix: string): LanguageForm {
+	nextLangId += 1;
+	return {
+		id: `l${nextLangId}`,
+		tag,
+		name,
+		suffix,
+		text: tag === 'ko' ? { ...KOREAN_TEXT } : {},
+		strings: {},
+	};
+}
+
+/** A translatable piece of the operator's own wording. */
+export interface TranslationSlot {
+	id: string;
+	/** Section heading in the form. */
+	group: string;
+	/** What this slot is. */
+	label: string;
+	/** The English text being translated. */
+	en: string;
+	/** Long enough to want a textarea. */
+	long?: boolean;
+	/** Interpolates `{rank}`, so the form can say so. */
+	pattern?: boolean;
+}
+
+/** Whether the sort dropdown offers the score options. Mirrors `sortBlock`. */
+export function hasScoreSort(form: FormState): boolean {
+	return form.columns.some(c => c.id === 'score' && c.enabled) || form.scale.some(s => s.score);
+}
+
+/**
+ * Every slot a language can translate, in the order the form shows them.
+ * Derived from the rest of the form, so turning a column off drops its row.
+ */
+export function translationSlots(form: FormState): TranslationSlot[] {
+	const slots: TranslationSlot[] = [];
+	if (form.siteTitle.trim()) {
+		slots.push({ id: 'title', group: 'Page', label: 'Header title', en: form.siteTitle.trim() });
+	}
+	if (form.footerNoteEn.trim()) {
+		slots.push({
+			id: 'footerNote',
+			group: 'Page',
+			label: 'Footer note',
+			en: form.footerNoteEn.trim(),
+			long: true,
+		});
+	}
+	if (form.footerLinkUrl.trim() && form.footerLinkLabel.trim()) {
+		slots.push({
+			id: 'footerLink',
+			group: 'Page',
+			label: 'Footer link text',
+			en: form.footerLinkLabel.trim(),
+		});
+	}
+	slots.push({ id: 'search', group: 'Page', label: 'Search box', en: FIXED_LABELS['search']! });
+
+	slots.push({ id: 'rank', group: 'Columns', label: 'Rank column', en: form.rankLabelEn });
+	slots.push({ id: 'device', group: 'Columns', label: 'Card heading', en: FIXED_LABELS['device']! });
+	slots.push({ id: 'brand', group: 'Columns', label: 'Brand', en: FIXED_LABELS['brand']! });
+	slots.push({ id: 'model', group: 'Columns', label: 'Model', en: FIXED_LABELS['model']! });
+	for (const column of form.columns) {
+		if (!column.enabled) continue;
+		slots.push({
+			id: `column:${column.id}`,
+			group: 'Columns',
+			label: `${column.labelEn} column`,
+			en: column.labelEn,
+		});
+	}
+	slots.push({
+		id: 'measurement',
+		group: 'Columns',
+		label: 'Measurement link',
+		en: FIXED_LABELS['measurement']!,
+	});
+
+	for (const type of form.types) {
+		if (!type.enabled) continue;
+		slots.push({
+			id: `type:${type.id}`,
+			group: 'Device types',
+			label: `${type.labelEn} tab`,
+			en: type.labelEn,
+		});
+	}
+
+	const sortKeys = ['rank-asc', 'rank-desc'];
+	if (hasScoreSort(form)) sortKeys.push('score-desc', 'score-asc');
+	for (const key of sortKeys) {
+		slots.push({
+			id: `sort:${key}`,
+			group: 'Sort options',
+			label: key,
+			en: SORT_PATTERNS[key]!,
+			pattern: key.startsWith('rank-'),
+		});
+	}
+	return slots;
+}
+
+/** The tags the toggle cycles through, English first. */
+export function languageTags(form: FormState): string[] {
+	return ['en', ...form.languages.map(l => l.tag.trim()).filter(Boolean)];
+}
+
+/**
+ * The language the toggle moves to from `tag`. `toggleLanguage` is read in the
+ * current language and names the next one, so every language needs to know this
+ * before it can be labelled honestly.
+ */
+export function nextLanguageName(form: FormState, tag: string): string {
+	const tags = languageTags(form);
+	const index = tags.indexOf(tag);
+	if (index === -1 || tags.length < 2) return '';
+	const next = tags[(index + 1) % tags.length]!;
+	if (next === 'en') return 'English';
+	return form.languages.find(l => l.tag.trim() === next)?.name.trim() || next;
 }
 
 export const PRESETS = ['letter', 'stars', 'score'] as const;
@@ -200,6 +437,12 @@ export const PRESET_LABELS: Record<string, { title: string; blurb: string }> = {
 	stars: { title: 'Five stars', blurb: 'Half steps from 0.5 to 5, drawn as stars.' },
 	score: { title: 'Numeric score', blurb: '0 to 10, as a color-coded number pill.' },
 };
+
+/** Set one slot on the language the editor ships translations for. */
+function setText(form: FormState, slot: string, value: string): void {
+	const korean = form.languages.find(l => l.tag === 'ko');
+	if (korean) korean.text[slot] = value;
+}
 
 export function presetState(preset: string): FormState {
 	const base: FormState = {
@@ -211,19 +454,15 @@ export function presetState(preset: string): FormState {
 		scoreDecimals: 1,
 		scale: LETTER.map(([value, score, color]) => step(value, score, color)),
 		rankLabelEn: 'Rank',
-		rankLabelKo: '등급',
 		types: defaultTypes(),
 		columns: defaultColumns(),
-		korean: true,
+		languages: [language('ko', 'Korean', '_KR')],
 		statsEnabled: true,
 		deepLinkTemplate: '{Brand}-{Model}',
 		siteTitle: 'SquigRanking',
 		footerNoteEn:
 			"The 'Ranking List' is based on the operator's personal listening experience " +
 			'and subjective evaluation of sound quality.',
-		footerNoteKo:
-			"'\uB7AD\uD0B9 \uB9AC\uC2A4\uD2B8'\uB294 \uC6B4\uC601\uC790\uC758 \uAC1C\uC778\uC801\uC778 \uCCAD\uC74C \uACBD\uD5D8\uACFC " +
-			'\uC74C\uC9C8\uC5D0 \uB300\uD55C \uC8FC\uAD00\uC801 \uD3C9\uAC00\uB97C \uBC14\uD0D5\uC73C\uB85C \uC791\uC131\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
 		footerLinkLabel: '',
 		footerLinkUrl: '',
 	};
@@ -232,7 +471,7 @@ export function presetState(preset: string): FormState {
 		base.badge = 'stars';
 		base.scale = STARS.map(([value, score]) => step(value, score, ''));
 		base.rankLabelEn = 'Rating';
-		base.rankLabelKo = '평점';
+		setText(base, 'rank', '평점');
 		base.columns = base.columns.map(c => (c.id === 'score' ? { ...c, enabled: false } : c));
 	} else if (preset === 'score') {
 		base.badge = 'score-badge';
@@ -241,7 +480,7 @@ export function presetState(preset: string): FormState {
 			return step(String(value), String(value), rampColor(DEFAULT_SCORE_RAMP, value / 10));
 		});
 		base.rankLabelEn = 'Score';
-		base.rankLabelKo = '점수';
+		setText(base, 'rank', '점수');
 		base.columns = base.columns.map(c => (c.id === 'score' ? { ...c, enabled: false } : c));
 	}
 	return base;
@@ -341,6 +580,36 @@ export function validate(form: FormState): string[] {
 	}
 	if (form.badge === 'stars' && form.scale.some(s => Number.parseFloat(s.value) > form.starsMax)) {
 		problems.push(`A step is worth more than ${form.starsMax} stars.`);
+	}
+
+	const tags = new Set<string>(['en']);
+	const suffixes = new Set<string>();
+	for (const lang of form.languages) {
+		const tag = lang.tag.trim();
+		if (!tag) {
+			problems.push('A language has no tag. Use the two-letter code, like `ja`.');
+		} else if (tag === 'en') {
+			problems.push('English is the base language and cannot be listed again.');
+		} else if (!/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(tag)) {
+			problems.push(`"${tag}" is not a language tag. Use a code like \`ja\` or \`zh-Hant\`.`);
+		} else if (tags.has(tag)) {
+			problems.push(`The language "${tag}" is listed twice.`);
+		}
+		tags.add(tag);
+
+		const suffix = lang.suffix.trim();
+		if (!suffix) {
+			problems.push(`${lang.name || tag} has no column suffix, so its text has nowhere to live in the sheet.`);
+		} else if (suffixes.has(suffix)) {
+			problems.push(`Two languages both read the "${suffix}" columns.`);
+		}
+		suffixes.add(suffix);
+
+		// The name reaches the page: core builds the language button's tooltip out
+		// of it, so an unnamed language leaves the button naming a tag.
+		if (tag && !lang.name.trim()) {
+			problems.push(`The "${tag}" language has no name, so its button would read "View in ${tag}".`);
+		}
 	}
 	return problems;
 }

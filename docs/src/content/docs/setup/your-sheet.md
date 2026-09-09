@@ -50,11 +50,38 @@ Excellent detail retrieval
 
 becomes two lines in the green block, not one run-on sentence.
 
-## Writing in two languages
+## Writing in more than one language
 
-Korean text goes in a parallel column. `Comment_KR`, `Pros_KR`, `Cons_KR` and `Notes_KR` are used when a reader switches the page to Korean.
+Translations live in parallel columns, and the config is what ties a header to a language. Nothing about `_KR` is built into the page — it is only the name the template happens to use. The `Comment` column in a bilingual config reads:
 
-A blank translated cell falls back to the English one, per row and per column. A half-translated sheet degrades one cell at a time instead of showing gaps.
+```js
+{
+	id: 'comment',
+	source: 'Comment',
+	i18nSource: { en: 'Comment', ko: 'Comment_KR' },
+	label: { default: 'Comment', i18n: { ko: '코멘트' } },
+	render: { kind: 'block' },
+}
+```
+
+`i18nSource` maps each language to the header it reads; `label` translates the heading drawn above it. The template wires that up for `Comment`, `Pros`, `Cons` and `Notes`, which is where those four `_KR` columns come from.
+
+A blank translated cell falls back to `source`, the language-neutral header, per row and per column. A half-translated sheet degrades one cell at a time instead of showing gaps.
+
+### Using another language
+
+The [config editor](/squigRanking/docs/config-editor/) has a language step. Give it a tag, a name and a column suffix — `ja`, Japanese, `_JA` — and it writes the four pieces a language needs:
+
+- `languages: { en: 'English', ja: 'Japanese' }`, which is the order the toggle cycles through;
+- an `i18nSource` entry per translated column, pointing at `Comment_JA` and its siblings;
+- your own wording — the page title, the footer note, every column and tab and sort option — with the English text beside each box, so you can see what you are translating;
+- the interface strings, the buttons and labels the page writes itself.
+
+Korean is the one language it knows the words for, so it arrives already filled in. Everything else starts empty, and every box you leave empty falls back to English. Its header row grows to match, so the sheet it hands you already has the columns for each language you added.
+
+It asks for both a tag and a name because they do different jobs. The tag is what the page matches against the reader's browser, so `ja` and not `Japanese`. The name is what the language button calls that language: the tooltip names the language it switches to, and the page builds that sentence out of these names rather than guessing. Word it yourself in the interface strings if you would rather it read in the language itself.
+
+Readers land on their stored choice if they have one, then on a match for their browser's language, then on the first entry in `languages`. Removing every language leaves an English-only page, and the toggle disappears along with it, since there is nothing to switch to. [`languages` and `i18n`](/squigRanking/docs/config/reference/#languages-and-i18n) has the whole surface for editing the file by hand.
 
 ## Header names are wired in the config
 

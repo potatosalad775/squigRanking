@@ -359,7 +359,7 @@ describe('a pre-scale config', () => {
     ].join('\n');
     const withClassMap = config.slice(0, open) + replacement + config.slice(close);
     return withClassMap
-      .replace('configVersion: 3,', 'configVersion: 1,')
+      .replace('configVersion: 4,', 'configVersion: 1,')
       // Drop the scale-era declarations the replacement above now duplicates.
       .replace("\n\t\t\tfilter: { kind: 'select' },", '')
       .replace("\n\t\t\trender: { kind: 'rank-badge' },", '');

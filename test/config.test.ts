@@ -78,3 +78,48 @@ test('a configured language list drives the cycle', () => {
   assert.deepEqual(languages(), ['en', 'ko', 'ja']);
   assert.equal(nextLanguage('ja'), 'en');
 });
+
+test('naming the languages drives the cycle the same way', () => {
+  setConfig({ ...CONFIG, languages: { en: 'English', ko: 'Korean', ja: 'Japanese' } });
+  assert.deepEqual(languages(), ['en', 'ko', 'ja']);
+  assert.equal(nextLanguage('ja'), 'en');
+});
+
+test('the language button names the language it moves to', () => {
+  // The tooltip is keyed by the language being read and names the next one, so
+  // the two built-in values are only right on an English-and-Korean page.
+  setConfig({ ...CONFIG, languages: { en: 'English', ko: 'Korean', ja: 'Japanese' } });
+  assert.equal(t('toggleLanguage', 'en'), 'View in Korean');
+  assert.equal(t('toggleLanguage', 'ko'), 'View in Japanese');
+  assert.equal(t('toggleLanguage', 'ja'), 'View in English');
+
+  // A page with no Korean on it must not offer to show Korean.
+  setConfig({ ...CONFIG, languages: { en: 'English', ja: 'Japanese' } });
+  assert.equal(t('toggleLanguage', 'en'), 'View in Japanese');
+  assert.equal(t('toggleLanguage', 'ja'), 'View in English');
+});
+
+test('an unnamed language list still gets the built-in tooltips', () => {
+  // The array form carries no names to build a tooltip from, so nothing changes
+  // for a config written before naming was possible.
+  setConfig({ ...CONFIG, languages: ['en', 'ko'] });
+  assert.equal(t('toggleLanguage', 'en'), STRINGS['en']!['toggleLanguage']);
+  assert.equal(t('toggleLanguage', 'ko'), STRINGS['ko']!['toggleLanguage']);
+});
+
+test('an explicit toggle string wins over the derived one', () => {
+  setConfig({
+    ...CONFIG,
+    languages: { en: 'English', ja: 'Japanese' },
+    i18n: { ja: { toggleLanguage: '英語で表示' } },
+  });
+  assert.equal(t('toggleLanguage', 'ja'), '英語で表示');
+  assert.equal(t('toggleLanguage', 'en'), 'View in Japanese');
+});
+
+test('a single language has no tooltip to derive', () => {
+  // Nothing to switch to, so the button is hidden and the string is moot; it
+  // must not come back naming the language already being read.
+  setConfig({ ...CONFIG, languages: { ko: 'Korean' } });
+  assert.equal(t('toggleLanguage', 'ko'), STRINGS['ko']!['toggleLanguage']);
+});

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LanguageEditor from './LanguageEditor.svelte';
 	import ScaleEditor from './ScaleEditor.svelte';
 	import { generateConfig, generateTemplateHeaders } from './generate.ts';
 	import { parseConfig } from './parse.ts';
@@ -82,12 +83,6 @@
 				<span>What the column is called</span>
 				<input type="text" bind:value={form.rankLabelEn} />
 			</label>
-			{#if form.korean}
-				<label class="field">
-					<span>In Korean</span>
-					<input type="text" bind:value={form.rankLabelKo} />
-				</label>
-			{/if}
 			{#if form.badge === 'stars'}
 				<label class="field narrow">
 					<span>Stars</span>
@@ -155,14 +150,6 @@
 
 	<section class="panel">
 		<h2>4. Choose your columns</h2>
-		<label class="toggle">
-			<input type="checkbox" bind:checked={form.korean} />
-			<span>Write reviews in English and Korean</span>
-		</label>
-		<p class="note">
-			Adds a parallel <code>_KR</code> column for each text block. A blank translated cell falls back
-			to English, per row.
-		</p>
 		<ul class="columns">
 			{#each form.columns as column, index (column.id)}
 				<li>
@@ -173,6 +160,10 @@
 				</li>
 			{/each}
 		</ul>
+		<p class="note">
+			Each text block gets a parallel column per language you add in step 6, so
+			<code>Comment</code> is joined by <code>Comment_KR</code> and any other you set up there.
+		</p>
 	</section>
 
 	<section class="panel">
@@ -185,12 +176,6 @@
 			<span>Footer note</span>
 			<textarea rows="2" bind:value={form.footerNoteEn}></textarea>
 		</label>
-		{#if form.korean}
-			<label class="field wide">
-				<span>Footer note (Korean)</span>
-				<textarea rows="2" bind:value={form.footerNoteKo}></textarea>
-			</label>
-		{/if}
 		<div class="options">
 			<label class="field">
 				<span>Footer link text</span>
@@ -208,7 +193,12 @@
 	</section>
 
 	<section class="panel">
-		<h2>6. Take the file</h2>
+		<h2>6. Write it in more than one language</h2>
+		<LanguageEditor bind:form />
+	</section>
+
+	<section class="panel">
+		<h2>7. Take the file</h2>
 
 		{#if problems.length}
 			<div class="problems" role="status">

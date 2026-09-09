@@ -6,8 +6,8 @@
 // A config that assigns anything other than the object is rejected rather than
 // silently half-imported.
 
-import type { ColumnToggle, FormState } from './form.ts';
-import { presetState, step } from './form.ts';
+import type { ColumnToggle, FormState, LanguageForm } from './form.ts';
+import { INTERFACE_STRINGS, LANGUAGE_PRESETS, language, nextLanguageName, presetState, step } from './form.ts';
 
 export interface ParseResult {
 	form?: FormState;
@@ -33,21 +33,70 @@ interface LooseConfig {
 	columns?: LooseColumn[];
 	stats?: { enabled?: boolean; average?: { denominator?: string } };
 	deepLink?: { template?: string };
-	languages?: string[];
+	languages?: string[] | Record<string, string>;
+	i18n?: Record<string, Record<string, string>>;
+	search?: { label?: unknown };
+	sort?: { labels?: Record<string, unknown> };
 	chrome?: {
 		title?: unknown;
 		footer?: { note?: unknown; links?: Array<{ href?: string; label?: unknown }> };
 	};
 }
 
-/** Pull the English text out of either I18nString shape. */
-function textOf(value: unknown, fallback: string): { en: string; ko: string } {
-	if (typeof value === 'string') return { en: value, ko: '' };
+/** Pull both halves out of either I18nString shape. */
+function textOf(value: unknown, fallback: string): { en: string; i18n: Record<string, string> } {
+	if (typeof value === 'string') return { en: value, i18n: {} };
 	if (value && typeof value === 'object') {
 		const record = value as { default?: string; i18n?: Record<string, string> };
-		return { en: record.default ?? fallback, ko: record.i18n?.['ko'] ?? '' };
+		return { en: record.default ?? fallback, i18n: { ...record.i18n } };
 	}
-	return { en: fallback, ko: '' };
+	return { en: fallback, i18n: {} };
+}
+
+/**
+ * The languages a config carries, English aside.
+ *
+ * A hand-edited file may declare `languages` and nothing else, or add an
+ * `i18nSource` without listing the tag, so all three places are read and the
+ * union is what the form shows.
+ */
+function collectTags(config: LooseConfig): string[] {
+	const tags: string[] = [];
+	const add = (tag: string | undefined): void => {
+		if (tag && tag !== 'en' && !tags.includes(tag)) tags.push(tag);
+	};
+	const declared = config.languages;
+	for (const tag of Array.isArray(declared) ? declared : Object.keys(declared ?? {})) add(tag);
+	for (const column of config.columns ?? []) {
+		for (const tag of Object.keys(column.i18nSource ?? {})) add(tag);
+	}
+	for (const tag of Object.keys(config.i18n ?? {})) add(tag);
+	return tags;
+}
+
+/**
+ * The suffix a language's headers use, read back off the first translated
+ * column: `Comment` plus `Comment_KR` is a `_KR` suffix.
+ */
+function suffixFor(config: LooseConfig, tag: string): string | undefined {
+	for (const column of config.columns ?? []) {
+		const header = column.i18nSource?.[tag];
+		const base = column.source;
+		if (header && base && header.startsWith(base) && header.length > base.length) {
+			return header.slice(base.length);
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Put `{rank}` back into a sort label. The form holds these as patterns so that
+ * renaming the rank column renames its sort options too; the file holds them
+ * already filled in.
+ */
+function toPattern(text: string, rankLabel: string): string {
+	if (!text || !rankLabel || !text.includes(rankLabel)) return text;
+	return text.replace(rankLabel, '{rank}');
 }
 
 function evaluate(source: string): { config?: LooseConfig; error?: string } {
@@ -103,7 +152,29 @@ export function parseConfig(source: string): ParseResult {
 
 	const rankLabel = textOf(rank.label, form.rankLabelEn);
 	form.rankLabelEn = rankLabel.en;
-	if (rankLabel.ko) form.rankLabelKo = rankLabel.ko;
+
+	// Languages, blank until the file fills them in: a config that carries no
+	// Korean footer note has to import as one, not as the editor's default.
+	const declaredNames = Array.isArray(config.languages) ? {} : (config.languages ?? {});
+	form.languages = collectTags(config).map((tag): LanguageForm => {
+		const known = LANGUAGE_PRESETS.find(l => l.tag === tag);
+		const name = declaredNames[tag] ?? known?.name ?? tag;
+		const suffix = suffixFor(config, tag) ?? known?.suffix ?? `_${tag.toUpperCase()}`;
+		const lang = language(tag, name, suffix);
+		lang.text = {};
+		return lang;
+	});
+	const setText = (tag: string, slot: string, value: string | undefined): void => {
+		const lang = form.languages.find(l => l.tag === tag);
+		if (lang && value) lang.text[slot] = value;
+	};
+	/** Copy every translation an I18nString carries into the same slot. */
+	const spread = (value: unknown, slot: string, fallback: string): string => {
+		const read = textOf(value, fallback);
+		for (const [tag, text] of Object.entries(read.i18n)) setText(tag, slot, text);
+		return read.en;
+	};
+	for (const [tag, text] of Object.entries(rankLabel.i18n)) setText(tag, 'rank', text);
 
 	if (badgeKind === 'stars') form.starsMax = rank.render?.max ?? 5;
 	if (badgeKind === 'score-badge') {
@@ -120,9 +191,7 @@ export function parseConfig(source: string): ParseResult {
 		type.enabled = Boolean(match);
 		if (!match) continue;
 		const [, body] = match;
-		const label = textOf(body['label'], type.labelEn);
-		type.labelEn = label.en;
-		if (label.ko) type.labelKo = label.ko;
+		type.labelEn = spread(body['label'], `type:${type.id}`, type.labelEn);
 		const source = body['source'] as { url?: string } | undefined;
 		if (source?.url) type.url = source.url;
 		type.phonebook = (body['phonebook'] as string) ?? '';
@@ -140,15 +209,44 @@ export function parseConfig(source: string): ParseResult {
 	form.columns = form.columns.map((column): ColumnToggle => {
 		const found = byId.get(column.id);
 		if (!found) return { ...column, enabled: false };
-		const label = textOf(found.label, column.labelEn);
 		return {
 			...column,
 			enabled: true,
 			header: found.source ?? column.header,
-			labelEn: label.en,
-			labelKo: label.ko || column.labelKo,
+			labelEn: spread(found.label, `column:${column.id}`, column.labelEn),
 		};
 	});
+
+	// The labels the form does not offer an input for still carry translations.
+	for (const [id, slot] of [['title', 'device'], ['brand', 'brand'], ['model', 'model'], ['measurement', 'measurement']] as const) {
+		const found = byId.get(id);
+		if (found) spread(found.label, slot, '');
+	}
+	spread(config.search?.label, 'search', '');
+
+	// Sort labels come back as patterns, so a later rank rename still reaches them.
+	for (const [key, value] of Object.entries(config.sort?.labels ?? {})) {
+		const read = textOf(value, '');
+		for (const [tag, text] of Object.entries(read.i18n)) {
+			const lang = form.languages.find(l => l.tag === tag);
+			if (!lang) continue;
+			const label = key.startsWith('rank-') ? toPattern(text, lang.text['rank'] ?? '') : text;
+			lang.text[`sort:${key}`] = label;
+		}
+	}
+
+	// Headers that are not `source` plus one suffix cannot be written back.
+	for (const lang of form.languages) {
+		const mismatch = config.columns!.find(c => {
+			const header = c.i18nSource?.[lang.tag];
+			return Boolean(header && c.source && header !== `${c.source}${lang.suffix}`);
+		});
+		if (mismatch) {
+			warnings.push(
+				`The ${lang.name} headers are not all "${'{column}'}${lang.suffix}", so the editor will rewrite ${mismatch.source}'s to "${mismatch.source}${lang.suffix}". Rename the sheet column or fix it by hand.`,
+			);
+		}
+	}
 
 	const known = new Set(['rank', 'title', 'brand', 'model', 'measurement', ...form.columns.map(c => c.id)]);
 	for (const column of config.columns!) {
@@ -160,14 +258,12 @@ export function parseConfig(source: string): ParseResult {
 	// Chrome. A config that sets none of it imports as a page with no title and
 	// no footer, which is exactly what that config renders.
 	const chrome = config.chrome ?? {};
-	form.siteTitle = chrome.title === false ? '' : textOf(chrome.title, '').en;
-	const note = textOf(chrome.footer?.note, '');
-	form.footerNoteEn = note.en;
-	form.footerNoteKo = note.ko;
+	form.siteTitle = chrome.title === false ? '' : spread(chrome.title, 'title', '');
+	form.footerNoteEn = spread(chrome.footer?.note, 'footerNote', '');
 	const footerLinks = chrome.footer?.links ?? [];
 	const firstLink = footerLinks[0];
 	form.footerLinkUrl = firstLink?.href ?? '';
-	form.footerLinkLabel = textOf(firstLink?.label, '').en;
+	form.footerLinkLabel = spread(firstLink?.label, 'footerLink', '');
 	if (footerLinks.length > 1) {
 		warnings.push('Only the first footer link was imported; the editor offers one. Add the rest by hand.');
 	}
@@ -175,7 +271,34 @@ export function parseConfig(source: string): ParseResult {
 		warnings.push('Its footer note had several paragraphs; only the first was imported.');
 	}
 
-	form.korean = Boolean(config.languages?.includes('ko')) || config.columns!.some(c => c.i18nSource?.['ko']);
+	// Interface strings. `en.toggleLanguage` is the one the generator writes for
+	// itself, so it is re-derived rather than imported.
+	const knownStrings = new Set(INTERFACE_STRINGS.map(s => s.key));
+	for (const [tag, strings] of Object.entries(config.i18n ?? {})) {
+		const lang = form.languages.find(l => l.tag === tag);
+		for (const [key, value] of Object.entries(strings ?? {})) {
+			if (tag === 'en') {
+				if (key !== 'toggleLanguage') {
+					warnings.push(`Its English override of "${key}" was left out; the editor translates away from English, not into it.`);
+				}
+				continue;
+			}
+			if (!knownStrings.has(key)) {
+				warnings.push(`"${key}" is not an interface string the editor knows, so it was left out.`);
+				continue;
+			}
+			if (lang) lang.strings[key] = String(value);
+		}
+	}
+
+	// Core derives this from the language names now, so a config carrying the
+	// text an older editor wrote is not an override worth keeping.
+	for (const lang of form.languages) {
+		if (lang.strings['toggleLanguage'] === `View in ${nextLanguageName(form, lang.tag)}`) {
+			delete lang.strings['toggleLanguage'];
+		}
+	}
+
 	form.statsEnabled = config.stats?.enabled !== false;
 	if (config.deepLink?.template) form.deepLinkTemplate = config.deepLink.template;
 

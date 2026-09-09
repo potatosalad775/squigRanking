@@ -16,8 +16,11 @@ import { rampColor, readableTextColor } from '../src/color.ts';
 import { csvToRows } from '../src/csv.ts';
 import { CONFIG_VERSION } from '../src/types.ts';
 import type { RankingConfig } from '../src/types.ts';
+import { STRINGS, languages, t } from '../src/i18n.ts';
+import { columnValue, resolveI18n } from '../src/config.ts';
 import {
-  presetState, rampColor as editorRamp, readableTextColor as editorTextColor, validate,
+  INTERFACE_STRINGS, language, presetState, rampColor as editorRamp,
+  readableTextColor as editorTextColor, validate,
 } from '../docs/src/components/config-editor/form.ts';
 import {
   generateConfig, generateTemplateHeaders,
@@ -144,6 +147,202 @@ test('validation catches the mistakes the form makes easy', () => {
   const noUrl = presetState('letter');
   noUrl.types[0]!.url = 'https://example.com/sheet';
   assert.ok(validate(noUrl).some(p => p.includes('published CSV')));
+});
+
+// --- Languages ---------------------------------------------------------------
+
+/** The letter preset plus a language core ships no strings for. */
+function withJapanese() {
+  const form = presetState('letter');
+  const ja = language('ja', 'Japanese', '_JA');
+  ja.text['rank'] = 'ランク';
+  ja.text['column:pros'] = '長所';
+  ja.text['sort:rank-asc'] = '{rank}（高い順）';
+  ja.text['footerNote'] = '本ランキングは運営者の個人的な試聴に基づきます。';
+  ja.strings['filterAndSort'] = 'フィルターと並べ替え';
+  form.languages.push(ja);
+  return form;
+}
+
+test('the editor offers every interface string core actually writes', () => {
+  // The editor duplicates this list so the docs site builds without the root
+  // package. A string added to core has to show up in the form, or it silently
+  // becomes untranslatable for everyone using the editor.
+  assert.deepEqual(
+    INTERFACE_STRINGS.map(s => s.key).sort(),
+    Object.keys(STRINGS['en']!).sort(),
+  );
+  for (const { key, en } of INTERFACE_STRINGS) {
+    assert.equal(en, STRINGS['en']![key], `the English text for ${key} has drifted`);
+  }
+});
+
+test('a third language reaches core as a language core can serve', () => {
+  const config = evaluate(generateConfig(withJapanese()));
+  setConfig(config);
+
+  assert.deepEqual(languages(), ['en', 'ko', 'ja']);
+  assert.equal(t('filterAndSort', 'ja'), 'フィルターと並べ替え');
+  // Untranslated strings fall back to English rather than going blank.
+  assert.equal(t('resetFilters', 'ja'), STRINGS['en']!['resetFilters']);
+
+  const rank = config.columns.find(c => c.role === 'rank')!;
+  assert.equal(resolveI18n(rank.label, 'ja'), 'ランク');
+  assert.equal(resolveI18n(rank.label, 'ko'), '등급');
+  assert.equal(resolveI18n(rank.label, 'de'), 'Rank');
+
+  // The sort label interpolates the rank name in the language it is written in.
+  assert.equal(resolveI18n(config.sort!.labels!['rank-asc'], 'ja'), 'ランク（高い順）');
+  assert.equal(resolveI18n(config.sort!.labels!['rank-asc'], 'ko'), '등급순 (높은 순)');
+});
+
+test('each language reads its own column, and falls back per cell', () => {
+  setConfig(evaluate(generateConfig(withJapanese())));
+  const pros = evaluate(generateConfig(withJapanese())).columns.find(c => c.id === 'pros')!;
+  assert.deepEqual(pros.i18nSource, { en: 'Pros', ko: 'Pros_KR', ja: 'Pros_JA' });
+
+  const row = { Pros: 'Even tonality', Pros_KR: '고른 음색', Pros_JA: '' };
+  assert.equal(columnValue(row, pros, 'ja'), 'Even tonality', 'a blank cell should fall back');
+  assert.equal(columnValue(row, pros, 'ko'), '고른 음색');
+});
+
+test('the template header row covers every language', () => {
+  const headers = generateTemplateHeaders(withJapanese());
+  for (const header of ['Pros', 'Pros_KR', 'Pros_JA', 'Comment_JA', 'Notes_JA']) {
+    assert.ok(headers.includes(header), `${header} is missing from the generated header row`);
+  }
+});
+
+test('the language button names the language it actually switches to', () => {
+  // The editor names the languages rather than writing the tooltips, and core
+  // builds each one from those names.
+  const form = presetState('letter');
+  form.languages = [language('ja', 'Japanese', '_JA')];
+  setConfig(evaluate(generateConfig(form)));
+  assert.equal(t('toggleLanguage', 'en'), 'View in Japanese');
+  assert.equal(t('toggleLanguage', 'ja'), 'View in English');
+
+  // Three languages: each button names the next one round, Korean included.
+  const three = evaluate(generateConfig(withJapanese()));
+  setConfig(three);
+  assert.equal(t('toggleLanguage', 'en'), 'View in Korean');
+  assert.equal(t('toggleLanguage', 'ko'), 'View in Japanese');
+  assert.equal(t('toggleLanguage', 'ja'), 'View in English');
+
+  // None of which is written into the file. This fixture overrides one string
+  // by hand, so `i18n` exists — but it carries no tooltip for anything.
+  assert.deepEqual(three.i18n, { ja: { filterAndSort: 'フィルターと並べ替え' } });
+  assert.ok(!generateConfig(withJapanese()).includes('toggleLanguage'));
+});
+
+test('an operator can still word the language button themselves', () => {
+  const form = withJapanese();
+  form.languages[1]!.strings['toggleLanguage'] = '英語で表示';
+  setConfig(evaluate(generateConfig(form)));
+  assert.equal(t('toggleLanguage', 'ja'), '英語で表示');
+  // The rest are still derived from the names.
+  assert.equal(t('toggleLanguage', 'ko'), 'View in Japanese');
+
+  const first = generateConfig(form);
+  const result = parseConfig(first);
+  assert.equal(result.form!.languages[1]!.strings['toggleLanguage'], '英語で表示');
+  assert.equal(generateConfig(result.form!), first);
+});
+
+test('a tooltip an older editor wrote is dropped rather than kept as an override', () => {
+  // Earlier output carried `View in X` per language. Core derives that now, so
+  // importing one should leave nothing behind to regenerate.
+  const config = generateConfig(withJapanese()).replace(
+    '};',
+    "\ti18n: { ko: { toggleLanguage: 'View in Japanese' } },\n};",
+  );
+  const result = parseConfig(config);
+  assert.equal(result.error, undefined);
+  assert.equal(result.form!.languages[0]!.strings['toggleLanguage'], undefined);
+  assert.ok(!generateConfig(result.form!).includes('toggleLanguage'));
+});
+
+test('only the sort labels interpolate the rank name', () => {
+  // The braces are the form's own notation, not something an operator's prose
+  // should trip over.
+  const form = presetState('letter');
+  form.languages[0]!.text['footerNote'] = '{rank} 표기는 그대로 둡니다.';
+  const config = evaluate(generateConfig(form));
+  assert.equal(resolveI18n(config.chrome!.footer!.note as never, 'ko'), '{rank} 표기는 그대로 둡니다.');
+  assert.equal(resolveI18n(config.sort!.labels!['rank-asc'], 'ko'), '등급순 (높은 순)');
+});
+
+test('an English-only config carries no language machinery at all', () => {
+  const form = presetState('letter');
+  form.languages = [];
+  const output = generateConfig(form);
+  assert.ok(!output.includes('languages:'), 'a one-language page has nothing to toggle');
+  assert.ok(!output.includes('i18nSource'), 'a one-language page needs no parallel columns');
+
+  const config = evaluate(output);
+  setConfig(config);
+  assert.equal(resolveI18n(config.columns.find(c => c.role === 'rank')!.label, 'en'), 'Rank');
+});
+
+test('a config with a third language survives a round trip', () => {
+  const first = generateConfig(withJapanese());
+  const result = parseConfig(first);
+  assert.equal(result.error, undefined);
+  assert.deepEqual(result.warnings, []);
+  assert.deepEqual(result.form!.languages.map(l => l.tag), ['ko', 'ja']);
+  assert.equal(result.form!.languages[1]!.suffix, '_JA');
+  // Sort labels come back as patterns, so renaming the rank column still reaches them.
+  assert.equal(result.form!.languages[1]!.text['sort:rank-asc'], '{rank}（高い順）');
+  assert.equal(generateConfig(result.form!), first);
+});
+
+test('the importer finds a language the config only half declares', () => {
+  // A hand-edited file may list a tag without translating a single column, or
+  // add an `i18nSource` without listing the tag. Both are still that language.
+  const config = generateConfig(presetState('letter'))
+    .replace("languages: { en: 'English', ko: 'Korean' },", "languages: { en: 'English', ko: 'Korean', fr: 'French' },");
+  const result = parseConfig(config);
+  assert.deepEqual(result.form!.languages.map(l => l.tag), ['ko', 'fr']);
+  assert.equal(result.form!.languages[1]!.suffix, '_FR', 'an unknown suffix should get a default');
+});
+
+test('the importer still reads a config that only lists its languages', () => {
+  // The array form predates naming and stays valid, so it has to import as the
+  // same form the editor would produce for it.
+  const legacy = generateConfig(presetState('letter'))
+    .replace("languages: { en: 'English', ko: 'Korean' },", "languages: ['en', 'ko'],");
+  const result = parseConfig(legacy);
+  assert.equal(result.error, undefined);
+  assert.deepEqual(result.form!.languages.map(l => l.tag), ['ko']);
+  assert.equal(result.form!.languages[0]!.name, 'Korean', 'a known tag should get its name back');
+  // Regenerating names them, which is the upgrade.
+  assert.ok(generateConfig(result.form!).includes("languages: { en: 'English', ko: 'Korean' },"));
+});
+
+test('validation catches the mistakes a language list makes easy', () => {
+  const duplicate = presetState('letter');
+  duplicate.languages.push(language('ko', 'Korean again', '_KO'));
+  assert.ok(validate(duplicate).some(p => p.includes('listed twice')));
+
+  const noSuffix = presetState('letter');
+  noSuffix.languages.push(language('ja', 'Japanese', ''));
+  assert.ok(validate(noSuffix).some(p => p.includes('no column suffix')));
+
+  const collision = presetState('letter');
+  collision.languages.push(language('ja', 'Japanese', '_KR'));
+  assert.ok(validate(collision).some(p => p.includes('both read')));
+
+  const badTag = presetState('letter');
+  badTag.languages.push(language('Japanese', 'Japanese', '_JA'));
+  assert.ok(validate(badTag).some(p => p.includes('not a language tag')));
+
+  // The name is what the button calls this language on every other language's
+  // page, so an unnamed one would read "View in ja".
+  const unnamed = presetState('letter');
+  unnamed.languages.push(language('ja', '', '_JA'));
+  assert.ok(validate(unnamed).some(p => p.includes('no name')));
+  unnamed.languages[1]!.name = 'Japanese';
+  assert.deepEqual(validate(unnamed), []);
 });
 
 test('the editor and the runtime agree on color math', () => {

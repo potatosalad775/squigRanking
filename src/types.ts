@@ -12,8 +12,15 @@
  * builds everything inside them, so the header title, the header links, which
  * toggles appear and the whole footer moved out of `index.html` and into the
  * config. A version-2 config renders a page with no title and no footer.
+ *
+ * 4 added the named form of `languages`: `{ en: 'English', ja: 'Japanese' }`
+ * rather than `['en', 'ja']`. Core writes the language button's tooltip from
+ * those names, so a deploy offering anything but the built-in English and
+ * Korean no longer has to hand-write `i18n.*.toggleLanguage` for every language
+ * to stop the button naming one the page does not have. The array form still
+ * works and still falls back to the two built-in tooltips.
  */
-export const CONFIG_VERSION = 3;
+export const CONFIG_VERSION = 4;
 
 /** A raw CSV row: header name -> trimmed cell value. */
 export type Row = Record<string, string>;
@@ -279,8 +286,16 @@ export interface RankingConfig {
   sort?: SortConfig;
   stats?: StatsConfig;
   deepLink?: DeepLinkConfig;
-  /** Languages offered by the toggle, in cycle order. Defaults to `['en', 'ko']`. */
-  languages?: Lang[];
+  /**
+   * Languages offered by the toggle, in cycle order. Defaults to `['en', 'ko']`.
+   *
+   * Naming them — `{ en: 'English', ko: 'Korean' }` — also gives core what it
+   * needs to write the language button's tooltip ("View in Korean") for each
+   * one, instead of falling back to a built-in string that can only be right
+   * on an English-and-Korean page. An explicit `i18n.<lang>.toggleLanguage`
+   * still wins, for a tooltip worded in the language itself.
+   */
+  languages?: Lang[] | Record<Lang, string>;
   /** Overrides for built-in chrome strings, keyed by language then string id. */
   i18n?: Record<Lang, Record<string, string>>;
   /** Where the page loads its own build from. Read by loader.js, not by core. */
