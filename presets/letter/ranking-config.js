@@ -19,7 +19,7 @@ window.RANKING_CONFIG = {
 			label: { default: 'Earphones', i18n: { ko: '이어폰' } },
 			source: {
 				kind: 'csv',
-				url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSks_18k_uClvDeIliTDCEILHXkKEltrE5wEiUfQAIwq1NvlFkB49OTFmfazjx7FFJC8alqW-0nXZhI/pub?gid=0&single=true&output=csv',
+				url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSks_18k_uClvDeIliTDCEILHXkKEltrE5wEiUfQAIwq1NvlFkB49OTFmfazjx7FFJC8alqW-0nXZhI/pub?gid=667242096&single=true&output=csv',
 			},
 			phonebook: '../data/phone_book.json',
 			measurementUrl: '../?share={file}',
@@ -30,7 +30,7 @@ window.RANKING_CONFIG = {
 			label: { default: 'Headphones', i18n: { ko: '헤드폰' } },
 			source: {
 				kind: 'csv',
-				url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSks_18k_uClvDeIliTDCEILHXkKEltrE5wEiUfQAIwq1NvlFkB49OTFmfazjx7FFJC8alqW-0nXZhI/pub?gid=0&single=true&output=csv',
+				url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSks_18k_uClvDeIliTDCEILHXkKEltrE5wEiUfQAIwq1NvlFkB49OTFmfazjx7FFJC8alqW-0nXZhI/pub?gid=667242096&single=true&output=csv',
 			},
 			phonebook: '../headphones/data/phone_book.json',
 			measurementUrl: '../headphones/?share={file}',

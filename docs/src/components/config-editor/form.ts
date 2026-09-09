@@ -117,7 +117,7 @@ export const DEFAULT_SCORE_RAMP = ['#b71c1c', '#ffc107', '#4caf50', '#6c63ff'];
 
 /** The demo sheet every preset ships pointing at. */
 export const DEMO_SHEET =
-	'https://docs.google.com/spreadsheets/d/e/2PACX-1vSks_18k_uClvDeIliTDCEILHXkKEltrE5wEiUfQAIwq1NvlFkB49OTFmfazjx7FFJC8alqW-0nXZhI/pub?gid=0&single=true&output=csv';
+	'https://docs.google.com/spreadsheets/d/e/2PACX-1vSks_18k_uClvDeIliTDCEILHXkKEltrE5wEiUfQAIwq1NvlFkB49OTFmfazjx7FFJC8alqW-0nXZhI/pub?gid=667242096&single=true&output=csv';
 
 function defaultTypes(): TypeForm[] {
 	return [
