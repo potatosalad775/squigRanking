@@ -32,4 +32,4 @@ index.html           3.1 kB
 style.css            17.9 kB
 ranking-config.js    6.3 kB
 TEMPLATE.csv         0.8 kB
-TEMPLATE.xlsx        10.7 kB
+TEMPLATE.xlsx        10.8 kB
