@@ -1,0 +1,66 @@
+---
+title: squigRanking
+description: A static, config-driven ranking page for CrinGraph and
+  modernGraphTool squigs. Your reviews live in a spreadsheet; the page reads it.
+editUrl: true
+head: []
+template: splash
+hero:
+  tagline: Your reviews live in a spreadsheet. The page reads it, and nothing else
+    has to change.
+  actions:
+    - text: Quick start
+      link: /squigRanking/docs/setup/quick-start/
+      variant: primary
+      icon:
+        type: icon
+        name: right-arrow
+    - text: Build a config
+      link: /squigRanking/docs/config-editor/
+      variant: minimal
+sidebar:
+  hidden: false
+  attrs: {}
+pagefind: true
+draft: false
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+	<Card title="Two files, no build step" icon="document">
+		Drop `index.html` and one config file beside your existing measurement
+		site. There is nothing to install on the server and nothing to compile,
+		and the page picks up its own updates. Host every file yourself instead
+		if you would rather.
+	</Card>
+	<Card title="A spreadsheet is the database" icon="list-format">
+		Each part of a review is its own column: comment, pros, cons, notes, tags.
+		No markup to learn, no ordering rule to remember. A blank cell renders
+		nothing.
+	</Card>
+	<Card title="One list defines a rank" icon="star">
+		Grades, their colors, their order and what each is worth live in a single
+		`scale` list. Letter grades, five stars and numeric scores all ship ready
+		to copy.
+	</Card>
+	<Card title="Links both ways" icon="external">
+		Review-score badges in CrinGraph and modernGraphTool link into the matching
+		card, and every card links back to the measurement.
+	</Card>
+</CardGrid>
+
+## Where to start
+
+- **Never set this up before?** [Quick start](/squigRanking/docs/setup/quick-start/) gets a page live in about fifteen minutes.
+- **Picking how to grade?** [Choosing a rank style](/squigRanking/docs/ranks/choosing/) compares letters, stars and scores.
+- **Editing the config?** The [config editor](/squigRanking/docs/config-editor/) builds the file for you, with a live preview.
+
+:::tip[Using these docs with an AI assistant]
+Every page is also served as plain Markdown — add `.md` to any URL (this page is at
+[`/index.md`](/index.md)).
+
+For a whole-site context, point your assistant at [`/llms.txt`](/llms.txt). It indexes
+smaller, purpose-built bundles alongside the complete text, so you can hand over just the
+operator guide, the end-user guide, or the contributor guide instead of the entire site.
+:::

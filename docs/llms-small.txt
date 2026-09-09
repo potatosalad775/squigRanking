@@ -1,0 +1,412 @@
+<SYSTEM>This is the abridged developer documentation for squigRanking</SYSTEM>
+
+# squigRanking
+
+> Your reviews live in a spreadsheet. The page reads it, and nothing else has to change.
+
+Two files, no build step Drop `index.html` and one config file beside your existing measurement site. There is nothing to install on the server and nothing to compile, and the page picks up its own updates. Host every file yourself instead if you would rather. A spreadsheet is the database Each part of a review is its own column: comment, pros, cons, notes, tags. No markup to learn, no ordering rule to remember. A blank cell renders nothing. One list defines a rank Grades, their colors, their order and what each is worth live in a single `scale` list. Letter grades, five stars and numeric scores all ship ready to copy. Links both ways Review-score badges in CrinGraph and modernGraphTool link into the matching card, and every card links back to the measurement. ## Where to start * **Never set this up before?** [Quick start](/squigRanking/docs/setup/quick-start/) gets a page live in about fifteen minutes. * **Picking how to grade?** [Choosing a rank style](/squigRanking/docs/ranks/choosing/) compares letters, stars and scores. * **Editing the config?** The [config editor](/squigRanking/docs/config-editor/) builds the file for you, with a live preview.
+
+# Quick start
+
+> Get a ranking page live in about fifteen minutes, from copying the spreadsheet template to uploading two files.
+
+Five steps. The only thing you write is your own reviews. ## 1. Copy the spreadsheet template Open the [template spreadsheet](https://docs.google.com/spreadsheets/d/1YIXLswsOCEt-p0UWrP9_64n-xl5qC_fV-s0MThXeEDk/edit?usp=sharing) and use **File → Make a copy** to put it in your own Drive. The copy is yours. Delete the example rows and start typing your own, or keep them while you get the page working and clear them later. ## 2. Publish it as CSV The page reads a published CSV link, not the spreadsheet itself. In your copy: 1. **File → Share → Publish to web** 2. In the **Link** tab, set the left dropdown to your sheet (**List**) and the right one to **Comma-separated values (.csv)** 3. Click **Publish** and copy the URL it gives you That URL ends in `output=csv`. Keep it; step 4 needs it. ## 3. Download the page Grab the latest release and unzip it. You need two files out of it: 
+```plaintext
+index.html
+ranking-config.js
+```
+ The page fetches the rest — the script and the stylesheet — as it loads, and picks up bug fixes on its own. If you would rather host every file yourself, [Deploying](/squigRanking/docs/setup/deploying/#self-hosting-the-build) covers that; the rest of this page is the same either way. ## 4. Point the config at your sheet Open `ranking-config.js` in any text editor. Near the top you will find two `url` lines. Replace both with the URL you copied in step 2. 
+```js
+source: {
+  kind: 'csv',
+  url: 'https://docs.google.com/spreadsheets/d/e/.../pub?gid=0&single=true&output=csv',
+},
+```
+ There are two because the page supports separate earphone and headphone lists. Using the same URL for both is fine if you keep everything in one sheet. While you are in there, set the header title and the footer note, a little further down: 
+```js
+chrome: {
+  title: 'My Rankings',
+  footer: {
+    note: 'Rankings reflect my own listening.',
+  },
+},
+```
+ `index.html` carries no wording of its own, so this is the only place it lives. See [`chrome`](/squigRanking/docs/config/reference/#chrome) for the header links and the rest of the options. ## 5. Upload Put both files in a `ranking/` folder next to your existing measurement site: 
+```plaintext
+your-squig-site/
+├── index.html            ← your CrinGraph or modernGraphTool page
+├── data/phone_book.json
+└── ranking/              ← the two files go here
+```
+ Open `your-site.com/ranking/` and the page should list your devices. ## It loaded, but the list is empty Almost always the CSV link. Open the URL from step 2 directly in a browser tab: it should download or display raw comma-separated text. If it shows a spreadsheet interface instead, the **Publish to web** step picked the sharing link rather than the CSV one. ## Next * [Filling in your sheet](/squigRanking/docs/setup/your-sheet/) covers what each column does. * [Choosing a rank style](/squigRanking/docs/ranks/choosing/) if letter grades are not what you want. * [Linking from your graph tool](/squigRanking/docs/integration/cringraph/) so review scores become clickable.
+
+# Filling in your sheet
+
+> What each column in the spreadsheet does, how line breaks and translations work, and how to add a column of your own.
+
+Each part of a review lives in its own column. There is no markup to learn and no ordering rule to remember, because the config decides the order and a blank cell renders nothing. ## The columns | Column | Renders as | | ----------------- | -------------------------------------------------- | | `Brand`, `Model` | The card heading | | `Rank` | The colored badge, ordered by your rank scale | | `Score` | The average readout and the score sort. Optional | | `Driver`, `Style` | Small chips in the meta row | | `Comment` | The main paragraph | | `Pros` | A green block | | `Cons` | A red block | | `Notes` | A muted block, for caveats and measurement remarks | | `Tags` | Comma-separated pills, which are also searchable | `Score` is optional because a rank scale can say what each grade is worth. A sheet with only `Brand`, `Model` and `Rank` still sorts by score and still shows an average. See [How a scale works](/squigRanking/docs/ranks/scale/). ## Starting from your phone book `Brand` and `Model` are exactly what your measurement site already lists. Rather than retyping a few hundred of them, feed your `phone_book.json` to the [phone book converter](/squigRanking/docs/phonebook-converter/): it reads both the CrinGraph and the modernGraphTool dialect, lets you uncheck what you do not want ranked, and hands back rows with the same header as the template above. If your phone book already carries `reviewScore` values, it can seed the `Rank` column from them too. ## What is in the workbook If you started from the spreadsheet template rather than a bare CSV, it has three tabs. **List** is where you type. The header row is frozen, the Rank column is a dropdown so you cannot invent a grade by accident, and each grade colors its own cell the way it will look on the page. **Guide** holds the scale: every grade, what it is worth, and its color. The Score column and the Stats tab both read this table, so adding a grade here adds it everywhere in the workbook at once. Below the table is a description of each column and the publishing steps, so the sheet explains itself without this page open. **Stats** counts your devices per grade, works out the average, and charts it. Nothing to maintain; the formulas cover a thousand rows. Adding a grade to the sheet does not add it to the page. The `scale` in your config is what the page reads, so change both. The [config editor](/squigRanking/docs/config-editor/) is the easy way to keep them lined up. ## Line breaks are preserved Put each bullet on its own line inside the cell. In Google Sheets that is **Alt+Enter** (**Option+Enter** on a Mac). The page renders those breaks exactly as you typed them, so a Pros cell reading 
+```plaintext
+Even tonality
+Excellent detail retrieval
+```
+ becomes two lines in the green block, not one run-on sentence. ## Writing in more than one language Translations live in parallel columns, and the config is what ties a header to a language. Nothing about `_KR` is built into the page — it is only the name the template happens to use. The `Comment` column in a bilingual config reads: 
+```js
+{
+  id: 'comment',
+  source: 'Comment',
+  i18nSource: { en: 'Comment', ko: 'Comment_KR' },
+  label: { default: 'Comment', i18n: { ko: '코멘트' } },
+  render: { kind: 'block' },
+}
+```
+ `i18nSource` maps each language to the header it reads; `label` translates the heading drawn above it. The template wires that up for `Comment`, `Pros`, `Cons` and `Notes`, which is where those four `_KR` columns come from. A blank translated cell falls back to `source`, the language-neutral header, per row and per column. A half-translated sheet degrades one cell at a time instead of showing gaps. ### Using another language The [config editor](/squigRanking/docs/config-editor/) has a language step. Give it a tag, a name and a column suffix — `ja`, Japanese, `_JA` — and it writes the four pieces a language needs: * `languages: { en: 'English', ja: 'Japanese' }`, which is the order the toggle cycles through; * an `i18nSource` entry per translated column, pointing at `Comment_JA` and its siblings; * your own wording — the page title, the footer note, every column and tab and sort option — with the English text beside each box, so you can see what you are translating; * the interface strings, the buttons and labels the page writes itself. Korean is the one language it knows the words for, so it arrives already filled in. Everything else starts empty, and every box you leave empty falls back to English. Its header row grows to match, so the sheet it hands you already has the columns for each language you added. It asks for both a tag and a name because they do different jobs. The tag is what the page matches against the reader’s browser, so `ja` and not `Japanese`. The name is what the language button calls that language: the tooltip names the language it switches to, and the page builds that sentence out of these names rather than guessing. Word it yourself in the interface strings if you would rather it read in the language itself. Readers land on their stored choice if they have one, then on a match for their browser’s language, then on the first entry in `languages`. Removing every language leaves an English-only page, and the toggle disappears along with it, since there is nothing to switch to. [`languages` and `i18n`](/squigRanking/docs/config/reference/#languages-and-i18n) has the whole surface for editing the file by hand. ## Header names are wired in the config The page finds columns by the header names listed in `ranking-config.js`. Rename a header in your sheet only, and that column goes blank. Rename it in both places, and everything keeps working. The exception is anything with a `role`. Core finds the brand, model, rank and score columns by role, never by name, so you can call the brand column `Maker` as long as the role stays put. ## Adding a column Say you want a price column. 1. Add a `Price` header to your sheet and fill it in. 2. Add one entry to `columns` in your config: 
+```js
+{
+  id: 'price',
+  source: 'Price',
+  label: { default: 'Price', i18n: { ko: '가격' } },
+  filter: { kind: 'text' },
+  render: { kind: 'meta-chip' },
+}
+```
+ 3. Reload. No core changes, no build step. The [configuration reference](/squigRanking/docs/config/reference/) lists every renderer and filter kind you can use there. ## Keeping one sheet for two device types If earphones and headphones share a sheet, add a column that says which is which and filter on it per type: 
+```js
+types: {
+  earphone: {
+    // ...
+    rowFilter: { field: 'Type', values: ['IEM', 'Earbud'] },
+  },
+},
+```
+ Rows that do not match are dropped for that type. The alternative is two sheets and two URLs, which is simpler if the lists have little in common.
+
+# Deploying
+
+> The two-file auto-updating deploy, the self-hosted one, and what the default paths assume.
+
+The page is a static bundle that sits next to a CrinGraph-style measurement site. 
+```plaintext
+<deploy-root>/
+├── index.html                   ← your measurement page
+├── data/phone_book.json
+├── headphones/
+│   ├── index.html
+│   └── data/phone_book.json
+└── ranking/                     ← this project's files
+    ├── index.html
+    └── ranking-config.js
+```
+ Two files. No build step on the server, and no `lang/` folder: the interface strings ship inside the bundle. `index.html` names no version and no script of its own. It loads a small `loader.js`, which resolves the current build and injects it along with its stylesheet. That indirection is what lets a deploy update itself, and it is also what lets the same `index.html` run from disk instead — see [self-hosting](#self-hosting-the-build) below. ## Getting the files ### Download a release Grab the latest release, and copy out `index.html` and `ranking-config.js`. Edit the config to point at your sheet. Nothing to install, and nothing to come back for: the page fetches the newest published build every time it loads. The zip holds more than those two files. The rest is for self-hosting, and for switching rank style. ### Build from source 
+```bash
+npm install
+npm run build
+```
+ `dist/` becomes a complete deployable folder, presets included. Because a copy of `loader.js` ends up next to `index.html` there, serving `dist/` runs the build you just made rather than the published one — which is what you want while developing. ## Staying up to date By default a page tracks the newest major version published. Most deploys want the narrower promise instead: bug fixes automatically, breaking changes never. 
+```js
+window.RANKING_CONFIG = {
+  cdn: {
+    majorVersion: 1,
+  },
+  // ...
+};
+```
+ Pin an exact build with `version: '1.4.2'` when you need a deploy frozen — during an event, or while you work out whether a regression is yours. Both keys are described in [`cdn`](/squigRanking/docs/config/reference/#cdn). Versioned builds are immutable: `v1.4.2` is published once and never rewritten. Updating moves a pointer in `versions.json`, so rolling back is the same move in reverse and takes effect on the next page load. Caution Do not point a deploy at a branch URL by hand. jsDelivr caches those for twelve hours, so a breaking change would ship unannounced and then stay put. The version indirection exists precisely to avoid that. ## Self-hosting the build Copy five files rather than two, and the page never contacts the CDN at all: 
+```plaintext
+ranking/
+├── index.html
+├── ranking-config.js
+├── loader.js
+├── core.min.js
+└── style.css
+```
+ `loader.js` served from your own site means the build is there too, so that is all it takes — no config change. Use this for a deploy that has to work offline or behind a firewall, or when you would rather not depend on a third party staying up. The trade is that updating becomes your job again: copy the files from a newer release. `core.js` in the release zip is the same build unminified. Load it instead with `cdn: { debug: true }` when you need readable stack traces from a deploy. ## What the default paths assume Out of the box the config resolves measurements against `../data/phone_book.json` for earphones and `../headphones/data/phone_book.json` for headphones, and links to `../?share={file}` and `../headphones/?share={file}`. If your site is laid out differently, change `phonebook` and `measurementUrl` on each type. Nothing else depends on the layout. ## Testing locally Serve the folder rather than opening the file directly: 
+```bash
+cd dist
+python -m http.server
+```
+ Opening `index.html` from `file://` fails, because the browser blocks the `fetch()` calls that load your sheet and phonebook.
+
+# Choosing a rank style
+
+> Letter grades, five stars or a numeric score. What each looks like, what goes in the Rank cell, and how to switch.
+
+Three rank styles ship ready to use. Each one is a pair of files: a `ranking-config.js` and a `TEMPLATE.csv` whose Rank column already matches. | Style | Rank cell holds | Badge | Good when | | ------------- | --------------- | ---------------------------- | ------------------------------------------------ | | Letter grades | `S` … `F` | A colored grade badge | You think in tiers and want the tiers named | | Five stars | `0.5` … `5` | A row of stars, halves shown | Readers should grasp a rating without a legend | | Numeric score | `0` … `10` | A colored number pill | You want fine distinctions between close devices | Letter grades are the default because a named tier is easier to defend than a number. “This is a B+” invites less argument than “this is a 7.4”. ## Switching Copy the pair you want from `presets/` over the two files at the root of your deploy: 
+```bash
+cp presets/stars/ranking-config.js ranking-config.js
+cp presets/stars/TEMPLATE.csv TEMPLATE.csv
+```
+ Then put your sheet URL back into the new config, because each preset ships pointing at the demo sheet. Each preset also has a `TEMPLATE.xlsx` next to its CSV, with the rank dropdown, the guide and the chart already set to that scale. If you already have rows written against a different scale, translate the Rank column too. A value that is not on the scale shows no badge and sinks to the bottom of the list, which is deliberate: a typo should be visible rather than silently sorted somewhere plausible. ## Half steps and decimals The star preset uses half steps, from `0.5` to `5`. The badge draws them by clipping a row of stars, so a rating of `4.5` shows four full stars and one half. The score preset lists whole numbers `0` to `10`, but your sheet may hold decimals. A value of `8.6` counts in the `9` bar of the chart, displays as `8.6`, and averages as `8.6`. You do not have to list every decimal you might use. This only applies to numeric scales. A letter scale never guesses: `A-` on an S-through-F scale stays unranked. ## Building your own None of the three is special. Each is just a `scale` list in the config, and you can edit one or write your own from scratch. [How a scale works](/squigRanking/docs/ranks/scale/) covers the mechanics, and the [config editor](/squigRanking/docs/config-editor/) has a scale builder that previews the badges as you type.
+
+# How a scale works
+
+> One ordered list defines a rank: the dropdown, the sort order, the badge colors, the chart, and what each grade is worth.
+
+A rank used to be spread across four separate lists that had to stay lined up by hand. It is now one list, best first. 
+```js
+{
+  id: 'rank', source: 'Rank', role: 'rank', label: 'Rank',
+  sortable: true,
+  scale: [
+    { value: 'S', score: 5, color: '#6c63ff' },
+    { value: 'A', score: 4, color: '#00bfff' },
+    { value: 'B', score: 3, color: '#8bc34a' },
+  ],
+  filter: { kind: 'select' },
+  render: { kind: 'rank-badge' },
+}
+```
+ From that list the page derives all five of: * the options in the rank dropdown * the sort order, since the list is best first * each badge’s background color * the bars in the rank distribution chart * the score each grade is worth Adding a grade is one line. Recoloring one is one word. ## What goes in a step | Key | Effect | | ----------- | ---------------------------------------------------------------------- | | `value` | The cell value exactly as written in your sheet | | `score` | What the grade is worth. Feeds the score sort and the average readout | | `color` | The badge background, and this step’s bar in the chart | | `textColor` | The badge text. Defaults to white or near-black, whichever is readable | | `label` | Display text for the badge and dropdown. Defaults to `value` | | `class` | An extra CSS class, if a flat color is not enough | Only `value` is required. A scale of bare values still gives you a dropdown and a sort order. ## The Score column becomes optional When a row has no numeric Score cell, its score is whatever its grade is worth. A sheet holding only `Brand`, `Model` and `Rank` still sorts by score and still shows an average. That is why the star and score presets ship without a Score column at all. On those, the Rank cell is the number. ## Numeric scales tolerate values in between If every step in a scale is a number, a value that falls between two steps snaps to the nearer one for the chart and the sort order, while keeping its own value everywhere it is shown or averaged. So on a `10` down to `0` scale, a device rated `8.6`: * counts in the `9` bar of the distribution chart * displays as `8.6` on its badge * averages as `8.6`, not as `9` Letter scales never snap. An unknown grade stays unranked and sinks, so a typo is visible. ## Three badge styles 
+```js
+render: { kind: 'rank-badge' }                                    // colored grade badge
+render: { kind: 'stars', max: 5 }                                 // 4.5 draws four and a half
+render: { kind: 'score-badge', min: 0, max: 10, decimals: 1 }     // colored number pill
+```
+ `stars` clips a row of star icons to a percentage, so any fraction works without half-star artwork. `score-badge` interpolates its color along a ramp between `min` and `max`. A 0-to-100 scale therefore needs no per-value color list: give it two or three stops and every value in between gets a color. ## Older configs A config written before scales existed keeps working with no edits. If a rank column has no `scale`, one is built from its `filter.values`, which preserves the order, the dropdown and the chart. `render.classMap` also still takes precedence over a scale color, so if you style badges from your own stylesheet you lose nothing by upgrading. The reverse is not true. A `core.js` older than the config it reads cannot understand a scale, and says so in the browser console rather than failing quietly. If you add a scale, update `core.js` at the same time.
+
+# Configuration reference
+
+> Every key in ranking-config.js: types, columns, rank scales, filters, sorting, stats and deep links.
+
+A single `window.RANKING_CONFIG` object, loaded via a `<script>` tag before `core.js`. Unknown or unset keys fall back to sensible defaults. Edit this file to change schema, filters, sort options, data sources, and redirect URLs — no core changes required. The authoritative definition is [`src/types.ts`](https://github.com/potatosalad775/squigRanking/blob/main/src/types.ts), published as `dist/types.d.ts`. With the JSDoc annotation at the top of `ranking-config.js`, your editor validates the whole object as you type. *** ## `configVersion` 
+```js
+configVersion: 4,
+```
+ The schema version this file targets. Core warns when a config declares a version newer than it understands, so a stale `core.js` after a CDN major bump says so in the console instead of silently half-working. An older config raises no warning: it still works. Optional, but recommended. | version | added | | ------- | -------------------------------------------------------------------------------- | | 1 | the original schema | | 2 | `scale` on the rank column, and the `stars` and `score-badge` renderers | | 3 | `chrome`: the header and footer moved out of `index.html` and into the config | | 4 | the named form of `languages`, which the language button’s tooltip is built from | *** ## `types` One entry per device category. Each key becomes a toggle button and a valid `?type=` URL param. 
+```js
+types: {
+  earphone: {
+    label: { default: 'Earphones', i18n: { ko: '이어폰' } },
+    source: { kind: 'csv', url: 'https://docs.google.com/.../pub?output=csv' },
+    phonebook: '../data/phone_book.json',
+    measurementUrl: '../?share={file}',
+    measurementsPageUrl: '../',          // header "measurements" icon link
+    defaults: { Style: 'Open' },         // fills blank cells on this type
+    rowFilter: { field: 'Category', values: ['iem'] },   // optional, see below
+  },
+}
+```
+ * `source.url` — published Google Sheet CSV URL (File → Share → Publish to web → CSV). * `phonebook` — CrinGraph `phone_book.json`. Omit it and measurement links are simply never shown. * `measurementUrl` — template; `{file}` is replaced with the URL-encoded phonebook filename. * `measurementsPageUrl` — where the top-right measurements icon sends the user for this type. Omit it and the icon is hidden. ### One sheet, several types By default each type fetches its own CSV. To serve several types from a single sheet, give them the same `source.url` and add a `rowFilter`: 
+```js
+earphone:  { rowFilter: { field: 'Category', values: ['iem', 'earbud'] }, /* ... */ },
+headphone: { rowFilter: { field: 'Category', values: ['headphone'] },    /* ... */ },
+```
+ Matching is case-insensitive. Rows whose `Category` matches nothing appear under no type. *** ## `columns` An ordered list. Each column declares its data source, filter, sort behavior and renderer independently. Card order follows this list. 
+```js
+{
+  id: 'rank',               // unique; referenced by sort keys and filter state
+  source: 'Rank',           // CSV header (optional for template-only columns)
+  role: 'rank',             // semantic hint; see below
+  label: { default: 'Rank', i18n: { ko: '등급' } },
+  sortable: true,
+  scale: [                       // rank columns only; see below
+    { value: 'S', score: 5, color: '#6c63ff' },
+    { value: 'A', score: 4, color: '#00bfff' },
+  ],
+  filter: { kind: 'select' },
+  render: { kind: 'rank-badge' },
+  showForTypes: ['headphone'],   // optional allowlist
+  placement: 'meta',             // optional slot override
+}
+```
+ ### `role` Roles are how core finds a column without hardcoding a header name. Rename `Brand` to `Maker` in your sheet and everything keeps working, as long as the role stays put. | role | used for | | ------- | ---------------------------------------------------------------------- | | `rank` | Badge ordering, the rank chart, the scale, and the primary tie-breaker | | `brand` | Phonebook brand matching, second tie-breaker | | `model` | Phonebook model matching, third tie-breaker | | `score` | Numeric sorting and the average readout; falls back to the rank scale | ### `scale` — defining a rank A rank used to be spread across four lists that had to stay index-aligned by hand: the filter values, the badge `classMap`, `stats.chartColors`, and a Score formula in the sheet. `scale` replaces all four. It is an ordered list, **best first**, and it is the only place a rank is defined. 
+```js
+{
+  id: 'rank', source: 'Rank', role: 'rank', label: 'Rank',
+  sortable: true,
+  scale: [
+    { value: 'S', score: 5, color: '#6c63ff' },
+    { value: 'A', score: 4, color: '#00bfff' },
+    { value: 'B', score: 3, color: '#8bc34a' },
+  ],
+  filter: { kind: 'select' },
+  render: { kind: 'rank-badge' },
+}
+```
+ From that one list core derives the dropdown options, the sort order, the badge color, the chart bar colors, and the score each grade is worth. Add a grade by adding one line. | key | effect | | ----------- | --------------------------------------------------------------------- | | `value` | the cell value as written in the sheet | | `score` | what the grade is worth; feeds the score sort and the average readout | | `color` | badge background, and the chart bar for this step | | `textColor` | badge text; defaults to white or near-black, whichever is readable | | `label` | display text for the badge and the dropdown; defaults to `value` | | `class` | an extra CSS class on the badge, for styling beyond a flat color | Three consequences worth knowing: * **The Score column becomes optional.** When a row has no numeric Score cell, its score is the one its grade carries. A sheet with only `Brand`, `Model` and `Rank` still sorts by score and still shows an average. * **A numeric scale tolerates values between steps.** On an all-numeric scale, `8.6` counts in the `9` bar and shows as `8.6`. Letter scales never snap: an unknown grade stays unranked. * **`filter.values` and `stats.chartColors` become optional.** Set either one to override what the scale supplies. #### Star and numeric ranks 
+```js
+render: { kind: 'stars', max: 5 }                                  // 4.5 draws 4 and a half
+render: { kind: 'score-badge', min: 0, max: 10, decimals: 1 }      // colored 0-to-10 pill
+```
+ `stars` clips a row of star icons to a percentage, so any fraction works without half-star artwork. `score-badge` interpolates its color across `render.colors` between `min` and `max`, so a 0-to-100 scale needs no per-value color list. Three ready-made configurations live in [`presets/`](/squigRanking/docs/ranks/choosing/): `letter` (S through F), `stars` (five stars in half steps), and `score` (0 to 10). Each ships its own `TEMPLATE.csv` matching that scale. Copy the pair you want over `ranking-config.js` and `TEMPLATE.csv`. #### Configs written before scales `configVersion: 1` configs, which spell out `filter.values`, `render.classMap` and `stats.chartColors`, keep working unchanged. `classMap` still takes precedence over a scale color when both are set, so an operator styling badges from their own stylesheet loses nothing. A version-1 core cannot read a version-2 config, and says so in the console rather than failing quietly. ### Renderer kinds (`render.kind`) | kind | default slot | purpose | | ------------------ | ------------ | ------------------------------------------------------------ | | `rank-badge` | `rank` | colored badge; color comes from `scale` | | `stars` | `rank` | a row of stars out of `render.max`, halves included | | `score-badge` | `rank` | a number in a pill colored along `render.colors` | | `title` | `title` | heading; uses `render.template` with `{Header}` placeholders | | `meta-chip` | `meta` | chip in the meta row; consecutive chips get separators | | `text` / `numeric` | `meta` | plain span; `numeric` also sorts numerically | | `link` | `actions` | anchor; uses `render.hrefTemplate` or `render.href` | | `block` | `body` | a paragraph in the card body; see below | | `tags` | `body` | splits the cell on `separator` and renders pills | | `measurement-link` | `actions` | anchor resolved via the type’s phonebook | | `none` | — | not rendered; still filterable, sortable and searchable | ### `block` styles A `block` renders one cell as a paragraph, preserving the cell’s line breaks. 
+```js
+{ id: 'pros', source: 'Pros', label: 'Pros', render: { kind: 'block', style: 'up' } }
+```
+ | style | appearance | | ------- | ------------------------------------- | | `plain` | body text, no icon (the main comment) | | `up` | green block with a plus icon | | `down` | red block with a minus icon | | `note` | muted text with a question icon | | `muted` | muted text with an asterisk icon | A blank cell renders nothing at all, so every block is optional per row and order is set by the config, not by the operator’s typing. Add `blockLabel` to prefix the block with a bold heading (`blockLabel: { default: 'Pros' }`). Omit it and only the icon distinguishes the block, which is usually enough. ### Slots (card layout) `rank` (left block) · `title` (top of header) · `meta` (chip row) · `actions` (button row) · `body` (right content column). Override per column via `placement`. ### Filter kinds (`filter.kind`) * `text` — substring match on `filter.match` (array of CSV headers) or the column’s own `source`. * `select` — exact-match dropdown built from `filter.values`, or from the column’s `scale` when `values` is omitted. * `select-auto` — exact-match dropdown whose options are collected from the loaded rows, sorted alphabetically. Good for `Driver` and `Style` columns where the value set changes as the sheet grows. ### Per-language data columns 
+```js
+i18nSource: { en: 'Comment', ko: 'Comment_KR' },
+```
+ The page reads the header for the active language, and falls back to `source` when that cell is blank, so a half-translated sheet degrades per row rather than showing gaps. The header names are yours: `Comment_KR` is what the template happens to use, not something core looks for. See [`languages` and `i18n`](#languages-and-i18n) for the rest of what a second language needs. *** ## `search`, `sort`, `stats`, `deepLink` 
+```js
+search: {
+  enabled: true,
+  // Omit `fields` to search every header any column declares, in both languages.
+  fields: ['Brand', 'Model', 'Comment', 'Pros', 'Cons', 'Tags'],
+  label: { default: 'Search', i18n: { ko: '검색' } },
+},
+
+
+sort: {
+  default: 'rank-asc',
+  options: ['rank-asc', 'rank-desc', 'score-desc', 'brand-asc'],
+  labels: { 'rank-asc': { default: 'Rank (Best First)', i18n: { ko: '등급순 (높은 순)' } } },
+},
+
+
+stats: {
+  enabled: true,
+  average: { source: 'Score', denominator: '5.00' },
+  chartColors: ['#6c63ff', /* ... */],   // optional; defaults to the scale's colors
+  chartLibUrl: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+},
+
+
+deepLink: {
+  template: '{Brand}-{Model}',
+  slugify: 'lowercase-hyphen',   // '#apple-airpods-max-usb-c'
+},
+```
+ Sort keys are `{columnId}-{asc|desc}`. A key with no matching label gets one generated from the column label. Rows with a blank or unrecognized value in the sorted column always sink to the bottom, in both directions. Chart.js is fetched the first time the statistics modal is opened, so it never delays the first render. Set `stats.enabled: false` to hide the button entirely. *** ## `chrome` The page shell. `index.html` is three empty landmarks — `#ranking-header`, `#ranking-content` and `#ranking-footer` — and core builds everything inside them, so branding the page never means editing markup. 
+```js
+chrome: {
+  title: { default: 'SquigRanking', i18n: { ko: '랭킹' } },
+  subtitle: 'IEM and headphone rankings',
+  titleUrl: '../',
+  links: [
+    { href: 'https://example.com/blog', label: 'Blog', icon: 'external', newTab: true },
+  ],
+  footer: {
+    note: { default: 'Rankings reflect my own listening.', i18n: { ko: '...' } },
+    links: [{ href: 'https://example.com', label: 'My site', newTab: true }],
+  },
+},
+```
+ | key | what it does | | ------------------ | ------------------------------------------------------------------------------------------------------------ | | `title` | Header title. An `I18nString`, or `false` for no title. Omitted renders nothing. | | `subtitle` | A second line under the title. | | `titleUrl` | Wraps the title in a link, e.g. back to your measurement page. | | `themeToggle` | Show the light/dark button. Default `true`. | | `languageToggle` | Show the language button. Defaults to on when more than one language is offered. | | `measurementsLink` | Show the header measurement icon. Default `true`; it appears only for types declaring `measurementsPageUrl`. | | `links` | Extra header links, before the built-in buttons. | | `footer.note` | The disclaimer under the list. Pass an array for several paragraphs. | | `footer.links` | Links along the footer’s bottom row. | A link takes `href`, an optional `label` (an `I18nString`), an optional `icon` (`measurements`, `external` or `info`), an optional `title` for the tooltip and accessible name, and `newTab`. There are no defaults for the wording: a config with no `chrome.title` renders no title, and one with no `footer` renders no footer bar at all rather than an empty strip. The shipped presets set both, so a fresh download has them. What stays in `index.html` is the `<head>`: `<title>`, the `og:` tags, the canonical URL and the favicon. Those are read by crawlers and link previews before any script runs, so they cannot come from a config. *** ## `languages` and `i18n` `languages` declares what the language toggle cycles through, in order: 
+```js
+languages: { en: 'English', ko: 'Korean', ja: 'Japanese' },
+```
+ Name them. The language button’s tooltip names the language it moves to, and core builds that sentence out of these names — “View in Japanese” on the Korean page, “View in English” on the Japanese one. `i18n` overrides the interface strings themselves. They ship inside the bundle in English and Korean, so this is for a third language, or for rewording one of the two: 
+```js
+i18n: {
+  ja: { filterAndSort: 'フィルターと並べ替え', resetFilters: 'リセット' },
+},
+```
+ Any string you do not override falls back to the built-in value, then to English, one string at a time — a language with two keys filled in works, with the rest in English. Available keys: `filterAndSort`, `resetFilters`, `search`, `sortBy`, `all`, `statsTitle`, `averageScore`, `deviceCount`, `closeStats`, `openStats`, `measurementsPage`, `toggleTheme`, `toggleLanguage`, `scrollTop`, `noResults`, `loadError`, `ascending`, `descending`. `toggleLanguage` is the one you rarely need. It is derived from the names above, in English; set it only to word the tooltip in the language itself — `i18n: { ja: { toggleLanguage: '英語で表示' } }`. An explicit value always wins over the derived one. ### What a new language touches Nothing in the page enumerates languages — a tag is supported exactly as far as your config carries it. For a language beyond the built-in two: * `languages` — the tag and its name, in cycle order. * `columns[].i18nSource` — the CSV header holding that language’s text, for each translated column. * Every `I18nString` in the file — column `label` and `blockLabel`, `scale[].label`, type labels, `sort.labels`, `search.label`, `chrome.title`, `footer.note`, link labels — takes `i18n: { ja: '...' }` alongside its `default`. * `i18n` — the interface strings, if you want them out of English. The [config editor](/squigRanking/docs/config-editor/) writes all of it: add a tag, a name and a column suffix in its language step and it fills in `languages`, the `i18nSource` entries, and a box for every piece of wording and every interface string. Korean comes pre-filled; anything else starts empty and falls back to English until you type in it. ### How a reader’s language is chosen Stored choice from a previous visit, else the first entry in `languages` matching `navigator.languages` (`ja-JP` matches a declared `ja`), else the first entry in the list. The choice is kept in `localStorage` under `preferred-lang`. Declaring a single language hides the language toggle, since there is nothing to switch to. Set `chrome.languageToggle: true` to show it anyway. Only strings core writes itself live in `i18n`. Your own wording — the header title, the footer note — belongs in [`chrome`](#chrome), which takes an `I18nString` for each and so carries its own translations. If you add markup of your own to `index.html`, `data-i18n="key"` on an element fills it from this table; `data-i18n-title` and `data-i18n-label` do the same for the `title` and `aria-label` attributes. *** ## `cdn` Where the page loads its own build from. Read by `loader.js` before the bundle exists, so unlike every other key here it never reaches core. Every field is optional, and most deploys set none of them. 
+```js
+cdn: {
+  majorVersion: 1,
+},
+```
+ | key | default | meaning | | -------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | | `source` | `'auto'` | `'auto'` follows `loader.js`: a copy in your own folder means the build is there too, the CDN copy means fetch the published one. `'local'` and `'cdn'` force it. | | `majorVersion` | highest published | Major version to track. Its newest patch is loaded on every visit. | | `version` | — | An exact build, e.g. `'1.4.2'`. Freezes the deploy and skips the version lookup. | | `base` | the project’s jsDelivr URL | CDN base. Point it at your own mirror of the `cdn` branch. | | `versionsUrl` | derived from `base` | Full URL to `versions.json`. | | `debug` | `false` | Load the readable `core.js` instead of `core.min.js`. | Setting `majorVersion` is the usual choice: bug fixes arrive on their own, and a major bump never does. See [Deploying](/squigRanking/docs/setup/deploying/#staying-up-to-date). ## Common edits ### Add a column (e.g. Price) Add a `Price` header to your sheet, then: 
+```js
+{
+  id: 'price',
+  source: 'Price',
+  label: { default: 'Price', i18n: { ko: '가격' } },
+  sortable: true,
+  filter: { kind: 'text' },
+  render: { kind: 'numeric' },
+},
+```
+ Add `'price-asc'` to `sort.options` if you want it in the dropdown. No code changes. ### Change the measurement URL scheme Edit `types.*.measurementUrl`. Operators without CrinGraph can point at arbitrary URLs, or drop `phonebook` to hide measurement links. ### Hide a column on one type Add `showForTypes: ['headphone']`. ### Translate a label Inline on the column: `label: { default: 'Rank', i18n: { ko: '등급', ja: 'ランク' } }`. ### Add a language Name the tag in `languages`, give each translated column an `i18nSource` entry, and add the tag to every `I18nString`. [`languages` and `i18n`](#languages-and-i18n) walks through it. *** ## Deep links * URL: `.../ranking/?type=earphone#apple-airpods-max-usb-c` * `?type=` selects the tab; `#<slug>` selects the tab that contains the card, scrolls to it, and highlights it. * Slug format is controlled by `deepLink.template` + `deepLink.slugify`. CrinGraph’s `listAugment.js` and modernGraphTool’s `PhoneSelector.svelte` build links in this format — see [the CrinGraph guide](/squigRanking/docs/integration/cringraph/) and [the modernGraphTool guide](/squigRanking/docs/integration/moderngraphtool/).
+
+# CrinGraph
+
+> Make a CrinGraph fork link its review-score badges to your ranking page.
+
+Wire up any CrinGraph fork so its review-score badges link to your squigRanking page. This is intentionally fork-agnostic — the changes below apply to vanilla CrinGraph and every downstream variant (Squiglink Lab, PublicGraphTool, etc.) that still uses `config.js` + `listAugment.js`. Two small edits per fork: 1. **`config.js`** (and `config_hp.js` if the fork has a separate headphone build) — add one knob: `ranking_url`. 2. **`listAugment.js`** — substitute placeholders in that template when building the review-score link. Both edits are additive and default to the current hardcoded behavior when `ranking_url` is unset, so existing deploys see no change. If you can’t find the `listAugment.js` in your fork, you can download it from Squiglink Lab [here](https://github.com/squiglink/lab/blob/main/listAugment.js). Don’t forget to hook it up in `index.html` like `<script src="listAugment.js"></script>` if your fork doesn’t already include it. *** ## Where these files live CrinGraph layout varies by fork, but the two files are always at the root of the graph-tool deploy: 
+```plaintext
+<crin-graph-root>/
+├── config.js               # earphone build config
+├── config_hp.js            # (forks with a split headphone build only)
+├── listAugment.js          # renders augmented rows in the phone picker
+├── graph_free.html
+├── graph_hp.html
+└── data/phone_book.json
+```
+ If the fork uses a bundler (rare), edit the source file that produces `listAugment.js` — the logic is the same. *** ## Step 1 — Add `ranking_url` to `config.js` Find the top-level config declarations. They look like a series of `const NAME = value;` lines (or in some forks, assignments on a config object). Add: 
+```js
+// Template for the review-score link in listAugment.js.
+// Placeholders: {type}, {brand}, {model}, {slug}, {fullName}.
+// If the template contains no placeholders, it is used verbatim.
+// Unset or empty string → falls back to the default below (no behavior change).
+ranking_url = '../../ranking/?type=earphone#{slug}';
+```
+ For `config_hp.js` (if present), use the headphone type: 
+```js
+ranking_url = '../../ranking/?type=headphone#{slug}';
+```
+ ### Placeholder semantics | placeholder | expands to | | ------------ | ------------------------------------------------------------------ | | `{type}` | `'earphone'` or `'headphone'` (whichever build this config drives) | | `{brand}` | the row’s brand, URL-encoded | | `{model}` | the row’s model, URL-encoded | | `{slug}` | `{brand}-{model}` lowercased, whitespace → `-` | | `{fullName}` | `{brand} {model}` URL-encoded | If `ranking_url` contains **no** placeholder tokens (e.g. it’s a raw spreadsheet link or a top-level index), the helper uses it as-is — no device identifier is appended. Useful when a deploy wants the badge to open a shared Google Sheet, a Notion page, etc. ### Deciding the template | operator want | template | | -------------------------------------------------------------- | ------------------------------------------------ | | Default squigRanking page at `../../ranking/` (parity with v1) | `'../../ranking/?type=earphone#{slug}'` | | Ranking page on a different path | `'/reviews/?type={type}#{slug}'` | | A raw Google Sheet (no per-device anchoring) | `'https://docs.google.com/.../pubhtml'` | | Custom page with query params | `'/custom-ranking/?brand={brand}&model={model}'` | *** ## Step 2 — Substitute placeholders in `listAugment.js` ### 2a. Add the helper At the top of `listAugment.js`, add `buildRankingUrl`: 
+```js
+// Resolve {placeholder} tokens in a ranking_url template.
+// Values are URL-encoded. If the template contains no tokens, return it unchanged.
+function buildRankingUrl(template, ctx) {
+    if (!template) return null;
+    if (!/\{[a-zA-Z]+\}/.test(template)) return template;
+    const brand = String(ctx.brand || '');
+    const model = String(ctx.model || '');
+    const slug = (brand + '-' + model).toLowerCase().replace(/\s+/g, '-');
+    const fullName = brand + ' ' + model;
+    const values = {
+        type: ctx.type || '',
+        brand: encodeURIComponent(brand),
+        model: encodeURIComponent(model),
+        slug: encodeURIComponent(slug).replace(/%2D/gi, '-'),
+        fullName: encodeURIComponent(fullName),
+    };
+    return template.replace(/\{([a-zA-Z]+)\}/g, (_, k) => values[k] != null ? values[k] : '');
+}
+```
+ ### 2b. Use it where the review-score link is built Somewhere in `listAugment.js` is a block that builds the augmented row for a phone. In vanilla CrinGraph it’s around line 313, inside a `reviewScore && !reviewStars` branch that currently does something like: 
+```js
+// BEFORE (hardcoded)
+augmentsRow1Col1.href = '../../ranking/?type=earphone#' +
+    (phone.brand.name + '-' + phone.phone).toLowerCase().replace(/\s+/g, '-');
+```
+ Replace with: 
+```js
+// AFTER (config-driven)
+const template = (typeof ranking_url !== 'undefined' && ranking_url)
+    ? ranking_url
+    : '../../ranking/?type=earphone#{slug}';   // ← keep the fork's original default here
+const resolved = buildRankingUrl(template, {
+    type: 'earphone',                          // ← 'headphone' in config_hp.js builds
+    brand: phone.brand.name,
+    model: phone.phone,
+});
+if (resolved) augmentsRow1Col1.href = resolved;
+```
+ Notes: * **Keep the fork’s original URL shape as the fallback** on the second line — this preserves zero-diff behavior when the operator hasn’t set `ranking_url`. * The `type` literal switches between `'earphone'` and `'headphone'` depending on which config file drives this build. Forks that merge both builds into one file can read it from an existing variable (e.g. `whichType` or similar) instead. * If your fork’s `listAugment.js` differs structurally (e.g. it builds an `<a>` element with `createElement` instead of writing `.href`), the replacement is the same: compute `resolved` once and set it on whichever element carries the review-score link. *** ## Step 3 — Verify 1. **Default behavior preserved.** Leave `ranking_url` unset in `config.js`. Open `graph_free.html`, find a phone whose review score is a plain number (not star-rated), click its badge. It should open your ranking page at `../../ranking/?type=earphone#<slug>` — exactly as before. 2. **Custom template.** Set `ranking_url = '/custom/?b={brand}&m={model}'`. Click the same badge. The browser should navigate to `/custom/?b=<url-encoded-brand>&m=<url-encoded-model>`. 3. **No-placeholder template.** Set `ranking_url = 'https://docs.google.com/spreadsheets/.../pubhtml'`. Click the badge. The raw spreadsheet URL should open — no slug, no query params appended. 4. **`alt_augment = false` unaffected.** Forks that set `alt_augment = false` bypass `listAugment.js` entirely. Confirm that flipping it off still skips the review-score rendering path (no regression from the edit). 5. **Headphone build.** Repeat with `config_hp.js` + `graph_hp.html` if the fork has a split build. *** ## Common gotchas * **`ranking_url` is `undefined`.** Some forks use strict mode; referencing an undeclared identifier throws. The `typeof ranking_url !== 'undefined'` guard in the snippet handles this — don’t remove it. * **Double-encoding.** If you manually pre-encode inside the template (e.g. `{brand}` → `%20` in the value), the helper will encode again. Use raw placeholders; encoding happens once, in `buildRankingUrl`. * **Hash-based templates and history.** Changing only the `#` hash on an existing ranking-page tab triggers `hashchange` and scrolls without reload. The ranking page listens for `hashchange` (see [src/main.ts](https://github.com/potatosalad775/squigRanking/blob/main/src/main.ts)), so this works out of the box. * **Forks without `listAugment.js`.** A few very old CrinGraph variants built the review-score element inline in `graph.js`. Same edit applies — just find the `.href = ...` assignment that produces the existing ranking link.
+
+# modernGraphTool
+
+> Point modernGraphTool at your ranking page with one config value.
+
+modernGraphTool (mGT) ships with a `RANKING_URL` knob that drives the review-score link in `PhoneSelector.svelte`. If the knob is unset or empty, the score renders as plain text (mGT’s legacy behavior). If it’s set, the score becomes a clickable link. **Operators only need to edit `defaults/config.js`.** The `PhoneSelector.svelte` wiring is maintained upstream — no component edits required (version v2.1.0 and up is required). *** ## Setup Open your mGT deploy’s `defaults/config.js` and set `RANKING_URL` in the `GRAPHTOOL_CONFIG` object: 
+```js
+GRAPHTOOL_CONFIG: {
+    // ...
+    RANKING_URL: '/ranking/?type={type}#{slug}',
+}
+```
+ The value is a URL template. mGT substitutes placeholder tokens per row at render time. ### Placeholder tokens | placeholder | expands to | | ------------ | ------------------------------------------------------------------------ | | `{type}` | always `'earphone'` — mGT does not track per-phone type (see note below) | | `{brand}` | URL-encoded brand | | `{model}` | URL-encoded model | | `{slug}` | `{brand}-{model}` lowercased, whitespace → `-` | | `{fullName}` | URL-encoded `'{brand} {model}'` | If the template contains **no** placeholder tokens, it’s used verbatim — useful when the review-score link should always go to the same URL (a raw Google Sheet, a Notion page, etc.) regardless of which phone is selected. > **`{type}` on headphone deploys.** mGT’s `phone_book.json` has no per-phone type field, so `{type}` resolves to the fixed literal `'earphone'`. For a headphone-only mGT deploy, hardcode the type in your URL instead of using the placeholder — e.g. `RANKING_URL: '/ranking/?type=headphone#{slug}'`. ### Example values 
+```js
+// Default squigRanking page on the same deploy:
+RANKING_URL: '/ranking/?type={type}#{slug}',
+
+
+// External squigRanking deploy:
+RANKING_URL: 'https://reviews.example.com/?type={type}#{slug}',
+
+
+// Raw Google Sheet (no per-device anchoring):
+RANKING_URL: 'https://docs.google.com/spreadsheets/.../pubhtml',
+
+
+// Custom page with query params:
+RANKING_URL: '/custom-ranking/?brand={brand}&model={model}',
+
+
+// Disabled (mGT default — review score stays display-only):
+RANKING_URL: '',
+```
+ *** ## Verify 1. **Default (knob unset).** Leave `RANKING_URL: ''` (or remove the key). Reload the tool — review scores should render as plain text with no link decoration, exactly as before. 2. **Link renders.** Set `RANKING_URL: '/ranking/?type={type}#{slug}'`. Reload. Review-scored phones now show a clickable score; clicking opens the ranking page scrolled to the matching device card. 3. **No-placeholder template.** Set `RANKING_URL` to a plain URL with no `{...}` tokens. Click any review-scored phone — it should open that exact URL with nothing appended. *** ## Common gotchas * **Empty string vs missing key.** Both are treated as “no link.” No errors are thrown. * **Same-tab vs new-tab.** mGT opens the link in a new tab by default. If you want same-tab navigation, that’s a component-level preference — file an issue upstream rather than patching the Svelte file locally. * **Hash-only navigation.** If the target URL changes only the `#hash` on a page the user is already viewing (e.g. the ranking page), the browser scrolls without reloading. The ranking page listens for `hashchange` and handles this. * **CrinGraph parallel.** The CrinGraph equivalent is `ranking_url` in `config.js`. Same placeholder tokens, different casing. See [the CrinGraph guide](/squigRanking/docs/integration/cringraph/).

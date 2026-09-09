@@ -1,0 +1,28 @@
+# squigRanking
+
+> A static, config-driven ranking page for CrinGraph and modernGraphTool measurement sites (squigs). Reviews live in a spreadsheet published as CSV; the page reads that sheet at load and renders one card per device. Deployed as two files beside an existing measurement site, with no build step and nothing to install on the server.
+
+- The audience is an operator setting up their own page, not an end user browsing one.
+  Almost every question is about the spreadsheet, `ranking-config.js`, or wiring the
+  badge link in CrinGraph or modernGraphTool.
+- `config/reference` is the authoritative page for config keys, but the real source of
+  truth is `src/types.ts` in the repository, published with the build as
+  `dist/types.d.ts`. Prefer the shipped types over anything inferred from an example.
+- Two pages of the site are interactive tools rather than documentation and so carry no
+  text here: `/config-editor/` builds a `ranking-config.js`, and `/phonebook-converter/`
+  turns the spreadsheet into a CrinGraph `phone_book.json`.
+- Every page is also available as raw Markdown by appending `.md` to its URL.
+
+## Documentation Sets
+
+- [Abridged documentation](https://potatosalad775.github.io/squigRanking/docs/llms-small.txt): a compact version of the documentation for squigRanking, with non-essential content removed
+- [Complete documentation](https://potatosalad775.github.io/squigRanking/docs/llms-full.txt): the full documentation for squigRanking
+
+## Notes
+
+- The complete documentation includes all content from the official documentation
+- The content is automatically generated from the same source as the official documentation
+
+## Optional
+
+- [Source repository](https://github.com/potatosalad775/squigRanking): the squigRanking source, including the config type definitions in `src/types.ts` and the three shipped presets under `presets/`
