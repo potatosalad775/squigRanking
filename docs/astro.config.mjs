@@ -2,7 +2,10 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import svelte from '@astrojs/svelte';
+import starlightDotMd from 'starlight-dot-md';
+import starlightLlmsTxt from 'starlight-llms-txt';
 import { sidebar } from './src/sidebar.ts';
+import { llmsTxtConfig } from './src/llms-txt.config.ts';
 
 const SITE = 'https://potatosalad775.github.io';
 // GitHub Pages serves this repo from a subpath and Astro does not derive `base`
@@ -36,6 +39,10 @@ export default defineConfig({
 			},
 			customCss: ['./src/styles/custom.css'],
 			sidebar,
+			// Machine-readable output, written into dist/ only. `starlightDotMd` serves any
+			// page's raw Markdown at its URL + `.md`; `starlightLlmsTxt` writes the llms.txt
+			// index and the flattened corpus. See src/llms-txt.config.ts.
+			plugins: [starlightDotMd(), starlightLlmsTxt(llmsTxtConfig)],
 		}),
 	],
 });

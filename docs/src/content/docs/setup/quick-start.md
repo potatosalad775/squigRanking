@@ -7,6 +7,15 @@ sidebar:
 
 Five steps. The only thing you write is your own reviews.
 
+:::tip[Using these docs with an AI assistant]
+Every page is also served as plain Markdown — add `.md` to any URL (this page is at
+[`/setup/quick-start.md`](/setup/quick-start.md)).
+
+For a whole-site context, point your assistant at [`/llms.txt`](/llms.txt). It indexes
+smaller, purpose-built bundles alongside the complete text, so you can hand over just the
+operator guide, the end-user guide, or the contributor guide instead of the entire site.
+:::
+
 ## 1. Copy the spreadsheet template
 
 Open the [template spreadsheet](https://docs.google.com/spreadsheets/d/1YIXLswsOCEt-p0UWrP9_64n-xl5qC_fV-s0MThXeEDk/edit?usp=sharing) and use **File → Make a copy** to put it in your own Drive.
