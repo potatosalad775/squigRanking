@@ -26,7 +26,7 @@
     "build:cdn": "npm run build && node scripts/build-cdn.js",
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run test && npm run build",
+    "check": "npm run typecheck && npm run build && npm run test",
     "prepublishOnly": "npm run check",
     "templates": "python scripts/build-templates.py",
     "templates:check": "python scripts/build-templates.py --check"

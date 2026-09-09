@@ -26,7 +26,7 @@ Nothing at the root is deployable. The thing you host is `dist/`, which the buil
 
 ```bash
 npm install
-npm run check      # typecheck, then tests, then build
+npm run check      # typecheck, then build, then tests
 npm run build      # bundles src/ into dist/ and assembles the deploy folder
 npm test           # unit tests plus a jsdom pass over the built bundle
 ```
