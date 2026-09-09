@@ -1,0 +1,11 @@
+<!-- Starlight links `<base>/favicon.svg` on every page whether or not the file
+     exists, so its absence was a 404 on all 21 of them. Three ascending bars:
+     the site ranks things, and the mark reads at 16px. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+	<rect width="32" height="32" rx="7" fill="#2f4dc4" />
+	<g fill="#ffffff">
+		<rect x="6" y="18" width="5" height="8" rx="1.5" />
+		<rect x="13.5" y="12" width="5" height="14" rx="1.5" />
+		<rect x="21" y="6" width="5" height="20" rx="1.5" />
+	</g>
+</svg>

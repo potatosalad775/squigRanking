@@ -48,4 +48,4 @@ This only applies to numeric scales. A letter scale never guesses: `A-` on an S-
 
 ## Building your own
 
-None of the three is special. Each is just a `scale` list in the config, and you can edit one or write your own from scratch. [How a scale works](/squigRanking/docs/ranks/scale/) covers the mechanics, and the [config editor](/squigRanking/docs/config-editor/) has a scale builder that previews the badges as you type.
+None of the three is special. Each is just a `scale` list in the config, and you can edit one or write your own from scratch. [How a scale works](/ranks/scale/) covers the mechanics, and the [config editor](/config-editor/) has a scale builder that previews the badges as you type.

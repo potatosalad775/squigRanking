@@ -31,7 +31,7 @@ Open the [template spreadsheet](https://docs.google.com/spreadsheets/d/1YIXLswsO
 The copy is yours. Delete the example rows and start typing your own, or keep them while you get the page working and clear them later.
 
 :::tip
-Already have a measurement site? The [phone book converter](/squigRanking/docs/phonebook-converter/) reads its `phone_book.json` and hands you a `Brand` and `Model` row for every device you have measured, so the only thing left to type is the review.
+Already have a measurement site? The [phone book converter](/phonebook-converter/) reads its `phone_book.json` and hands you a `Brand` and `Model` row for every device you have measured, so the only thing left to type is the review.
 :::
 
 ## 2. Publish it as CSV
@@ -57,7 +57,7 @@ index.html
 ranking-config.js
 ```
 
-The page fetches the rest — the script and the stylesheet — as it loads, and picks up bug fixes on its own. If you would rather host every file yourself, [Deploying](/squigRanking/docs/setup/deploying/#self-hosting-the-build) covers that; the rest of this page is the same either way.
+The page fetches the rest — the script and the stylesheet — as it loads, and picks up bug fixes on its own. If you would rather host every file yourself, [Deploying](/setup/deploying/#self-hosting-the-build) covers that; the rest of this page is the same either way.
 
 ## 4. Point the config at your sheet
 
@@ -83,10 +83,10 @@ chrome: {
 },
 ```
 
-`index.html` carries no wording of its own, so this is the only place it lives. See [`chrome`](/squigRanking/docs/config/reference/#chrome) for the header links and the rest of the options.
+`index.html` carries no wording of its own, so this is the only place it lives. See [`chrome`](/config/reference/#chrome) for the header links and the rest of the options.
 
 :::tip
-Prefer not to edit code at all? The [config editor](/squigRanking/docs/config-editor/) builds this file from a form and hands you the finished text.
+Prefer not to edit code at all? The [config editor](/config-editor/) builds this file from a form and hands you the finished text.
 :::
 
 ## 5. Upload
@@ -108,6 +108,6 @@ Almost always the CSV link. Open the URL from step 2 directly in a browser tab: 
 
 ## Next
 
-- [Filling in your sheet](/squigRanking/docs/setup/your-sheet/) covers what each column does.
-- [Choosing a rank style](/squigRanking/docs/ranks/choosing/) if letter grades are not what you want.
-- [Linking from your graph tool](/squigRanking/docs/integration/cringraph/) so review scores become clickable.
+- [Filling in your sheet](/setup/your-sheet/) covers what each column does.
+- [Choosing a rank style](/ranks/choosing/) if letter grades are not what you want.
+- [Linking from your graph tool](/integration/cringraph/) so review scores become clickable.

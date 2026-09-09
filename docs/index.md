@@ -10,13 +10,13 @@ hero:
     has to change.
   actions:
     - text: Quick start
-      link: /squigRanking/docs/setup/quick-start/
+      link: /setup/quick-start/
       variant: primary
       icon:
         type: icon
         name: right-arrow
     - text: Build a config
-      link: /squigRanking/docs/config-editor/
+      link: /config-editor/
       variant: minimal
 sidebar:
   hidden: false
@@ -52,9 +52,9 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## Where to start
 
-- **Never set this up before?** [Quick start](/squigRanking/docs/setup/quick-start/) gets a page live in about fifteen minutes.
-- **Picking how to grade?** [Choosing a rank style](/squigRanking/docs/ranks/choosing/) compares letters, stars and scores.
-- **Editing the config?** The [config editor](/squigRanking/docs/config-editor/) builds the file for you, with a live preview.
+- **Never set this up before?** [Quick start](/setup/quick-start/) gets a page live in about fifteen minutes.
+- **Picking how to grade?** [Choosing a rank style](/ranks/choosing/) compares letters, stars and scores.
+- **Editing the config?** The [config editor](/config-editor/) builds the file for you, with a live preview.
 
 :::tip[Using these docs with an AI assistant]
 Every page is also served as plain Markdown — add `.md` to any URL (this page is at

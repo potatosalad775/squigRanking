@@ -28,9 +28,9 @@ Review-score badges in CrinGraph and modernGraphTool link into the matching card
 
 Using these docs with an AI assistant
 
-Every page is also served as plain Markdown — add `.md` to any URL (this page is at [`/index.md`](/index.md)).
+Every page is also served as plain Markdown — add `.md` to any URL (this page is at [`/index.md`](/squigRanking/docs/index.md)).
 
-For a whole-site context, point your assistant at [`/llms.txt`](/llms.txt). It indexes smaller, purpose-built bundles alongside the complete text, so you can hand over just the operator guide, the end-user guide, or the contributor guide instead of the entire site.
+For a whole-site context, point your assistant at [`/llms.txt`](/squigRanking/docs/llms.txt). It indexes smaller, purpose-built bundles alongside the complete text, so you can hand over just the operator guide, the end-user guide, or the contributor guide instead of the entire site.
 
 # Quick start
 
@@ -40,9 +40,9 @@ Five steps. The only thing you write is your own reviews.
 
 Using these docs with an AI assistant
 
-Every page is also served as plain Markdown — add `.md` to any URL (this page is at [`/setup/quick-start.md`](/setup/quick-start.md)).
+Every page is also served as plain Markdown — add `.md` to any URL (this page is at [`/setup/quick-start.md`](/squigRanking/docs/setup/quick-start.md)).
 
-For a whole-site context, point your assistant at [`/llms.txt`](/llms.txt). It indexes smaller, purpose-built bundles alongside the complete text, so you can hand over just the operator guide, the end-user guide, or the contributor guide instead of the entire site.
+For a whole-site context, point your assistant at [`/llms.txt`](/squigRanking/docs/llms.txt). It indexes smaller, purpose-built bundles alongside the complete text, so you can hand over just the operator guide, the end-user guide, or the contributor guide instead of the entire site.
 
 ## 1. Copy the spreadsheet template
 
