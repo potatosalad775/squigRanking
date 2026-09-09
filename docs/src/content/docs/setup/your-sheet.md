@@ -14,7 +14,7 @@ Each part of a review lives in its own column. There is no markup to learn and n
 | `Brand`, `Model` | The card heading                                         |
 | `Rank`           | The colored badge, ordered by your rank scale            |
 | `Score`          | The average readout and the score sort. Optional         |
-| `Type`, `F/F`    | Small chips in the meta row                              |
+| `Driver`, `Style` | Small chips in the meta row                             |
 | `Comment`        | The main paragraph                                       |
 | `Pros`           | A green block                                            |
 | `Cons`           | A red block                                              |

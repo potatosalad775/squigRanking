@@ -13,7 +13,7 @@ const CONFIG: RankingConfig = {
   columns: [
     { id: 'brand', source: 'Brand', role: 'brand', label: 'Brand' },
     { id: 'model', source: 'Model', role: 'model', label: 'Model' },
-    { id: 'ff', source: 'F/F', label: 'Formfactor', showForTypes: ['headphone'] },
+    { id: 'pads', source: 'Pads', label: 'Pads', showForTypes: ['headphone'] },
     { id: 'pros', source: 'Pros', i18nSource: { en: 'Pros', ko: 'Pros_KR' }, label: 'Pros' },
   ],
   deepLink: { template: '{Brand}-{Model}', slugify: 'lowercase-hyphen' },
@@ -30,8 +30,8 @@ test('resolveI18n prefers the requested language then the default', () => {
 });
 
 test('showForTypes hides a column on other types', () => {
-  assert.equal(visibleColumns('earphone').some(c => c.id === 'ff'), false);
-  assert.equal(visibleColumns('headphone').some(c => c.id === 'ff'), true);
+  assert.equal(visibleColumns('earphone').some(c => c.id === 'pads'), false);
+  assert.equal(visibleColumns('headphone').some(c => c.id === 'pads'), true);
 });
 
 test('a localized column reads its per-language header', () => {
@@ -48,7 +48,7 @@ test('a blank localized cell falls back to the neutral source', () => {
 
 test('search defaults to every declared source header', () => {
   const fields = searchFields('en');
-  assert.deepEqual(fields.sort(), ['Brand', 'F/F', 'Model', 'Pros', 'Pros_KR'].sort());
+  assert.deepEqual(fields.sort(), ['Brand', 'Model', 'Pads', 'Pros', 'Pros_KR'].sort());
 });
 
 test('card ids slugify the deep-link template', () => {

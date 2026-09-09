@@ -127,20 +127,20 @@ function defaultTypes(): TypeForm[] {
 function defaultColumns(): ColumnToggle[] {
 	return [
 		{
-			id: 'type',
-			header: 'Type',
-			labelEn: 'Type',
-			labelKo: '종류',
+			id: 'driver',
+			header: 'Driver',
+			labelEn: 'Driver',
+			labelKo: '드라이버',
 			enabled: true,
-			hint: 'A chip in the meta row, with a dropdown filter built from your rows.',
+			hint: 'Hybrid, DD, BA, planar. A chip in the meta row, with a dropdown filter built from your rows.',
 		},
 		{
-			id: 'ff',
-			header: 'F/F',
-			labelEn: 'Formfactor',
+			id: 'style',
+			header: 'Style',
+			labelEn: 'Style',
 			labelKo: '형태',
 			enabled: true,
-			hint: 'Open or closed. Shown on headphones only.',
+			hint: 'Open, closed, IEM, earbud. A chip in the meta row, with its own dropdown filter.',
 		},
 		{
 			id: 'comment',

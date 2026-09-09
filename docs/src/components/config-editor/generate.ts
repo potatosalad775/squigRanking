@@ -117,9 +117,9 @@ function fixedColumns(form: FormState, depth: number): string[] {
 }
 
 /** How each optional column renders. Mirrors the shipped presets. */
-const COLUMN_SHAPES: Record<string, { render: string; filter?: string; i18n?: boolean; showFor?: string }> = {
-	type: { render: `{ kind: 'meta-chip' }`, filter: `{ kind: 'select-auto' }` },
-	ff: { render: `{ kind: 'meta-chip' }`, filter: `{ kind: 'select-auto' }`, showFor: 'headphone' },
+const COLUMN_SHAPES: Record<string, { render: string; filter?: string; i18n?: boolean }> = {
+	driver: { render: `{ kind: 'meta-chip' }`, filter: `{ kind: 'select-auto' }` },
+	style: { render: `{ kind: 'meta-chip' }`, filter: `{ kind: 'select-auto' }` },
 	comment: { render: `{ kind: 'block', style: 'plain' }`, i18n: true },
 	pros: { render: `{ kind: 'block', style: 'up' }`, i18n: true },
 	cons: { render: `{ kind: 'block', style: 'down' }`, i18n: true },
@@ -139,18 +139,9 @@ function optionalColumn(column: ColumnToggle, form: FormState, depth: number): s
 	}
 	lines.push(`label: ${i18nString(column.labelEn, column.labelKo, form.korean)},`);
 	if (column.id === 'score') lines.push(`sortable: true,`);
-	if (shape.showFor) lines.push(`showForTypes: [${q(shape.showFor)}],`);
 	if (shape.filter) lines.push(`filter: ${shape.filter},`);
 	lines.push(`render: ${shape.render},`);
 	return [`${pad}{`, ...lines.map(l => inner + l), `${pad}},`].join('\n');
-}
-
-/** The `showForTypes` on the formfactor column is meaningless without that type. */
-function keepsColumn(column: ColumnToggle, form: FormState): boolean {
-	if (!column.enabled) return false;
-	const shape = COLUMN_SHAPES[column.id];
-	if (shape?.showFor) return form.types.some(t => t.enabled && t.id === shape.showFor);
-	return true;
 }
 
 function sortBlock(form: FormState, depth: number): string {
@@ -238,7 +229,7 @@ export function generateConfig(form: FormState): string {
 	const columns = [
 		rankColumn(form, 2),
 		...fixedColumns(form, 2),
-		...form.columns.filter(c => keepsColumn(c, form)).map(c => optionalColumn(c, form, 2)),
+		...form.columns.filter(c => c.enabled).map(c => optionalColumn(c, form, 2)),
 	];
 
 	const measurement = [
@@ -304,7 +295,7 @@ export function generateConfig(form: FormState): string {
 export function generateTemplateHeaders(form: FormState): string[] {
 	const headers = ['Brand', 'Model', 'Rank'];
 	for (const column of form.columns) {
-		if (!keepsColumn(column, form) || column.id === 'score') continue;
+		if (!column.enabled || column.id === 'score') continue;
 		headers.push(column.header);
 	}
 	const score = form.columns.find(c => c.id === 'score');
@@ -312,7 +303,7 @@ export function generateTemplateHeaders(form: FormState): string[] {
 	if (form.korean) {
 		for (const id of ['comment', 'pros', 'cons', 'notes']) {
 			const column = form.columns.find(c => c.id === id);
-			if (column && keepsColumn(column, form)) headers.push(`${column.header}_KR`);
+			if (column?.enabled) headers.push(`${column.header}_KR`);
 		}
 	}
 	return headers;

@@ -10,17 +10,17 @@
 
 export const TEMPLATE_HEADERS: Record<string, string[]> = {
 	letter: [
-		'Brand', 'Model', 'Rank', 'Score', 'Type', 'Tags',
+		'Brand', 'Model', 'Rank', 'Score', 'Driver', 'Style', 'Tags',
 		'Comment', 'Pros', 'Cons', 'Notes',
 		'Comment_KR', 'Pros_KR', 'Cons_KR', 'Notes_KR',
 	],
 	stars: [
-		'Brand', 'Model', 'Rank', 'Type', 'Tags',
+		'Brand', 'Model', 'Rank', 'Driver', 'Style', 'Tags',
 		'Comment', 'Pros', 'Cons', 'Notes',
 		'Comment_KR', 'Pros_KR', 'Cons_KR', 'Notes_KR',
 	],
 	score: [
-		'Brand', 'Model', 'Rank', 'Type', 'Tags',
+		'Brand', 'Model', 'Rank', 'Driver', 'Style', 'Tags',
 		'Comment', 'Pros', 'Cons', 'Notes',
 		'Comment_KR', 'Pros_KR', 'Cons_KR', 'Notes_KR',
 	],

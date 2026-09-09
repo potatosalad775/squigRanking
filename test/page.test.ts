@@ -191,10 +191,16 @@ describe('controls', () => {
     assert.deepEqual(brands, ['grinear', 'lx', 'trueear']);
   });
 
-  test('the auto-built type filter lists the sheet values', () => {
-    const select = dom.window.document.querySelector<HTMLSelectElement>('#filter-input-type')!;
+  test('the auto-built driver filter lists the sheet values', () => {
+    const select = dom.window.document.querySelector<HTMLSelectElement>('#filter-input-driver')!;
     const options = [...select.options].map(option => option.value);
     assert.deepEqual(options, ['', 'Hybrid']);
+  });
+
+  test('the auto-built style filter lists the sheet values', () => {
+    const select = dom.window.document.querySelector<HTMLSelectElement>('#filter-input-style')!;
+    const options = [...select.options].map(option => option.value);
+    assert.deepEqual(options, ['', 'IEM']);
   });
 });
 
@@ -276,12 +282,12 @@ describe('language and chrome', () => {
 
 describe('deep links and type switching', () => {
   /** Boot at a specific URL so `?type=` and `#slug` are read at startup. */
-  async function bootAt(url: string): Promise<JSDOM> {
+  async function bootAt(url: string, csv: string = template): Promise<JSDOM> {
     const dom = new JSDOM(html, { url, runScripts: 'outside-only', pretendToBeVisual: true });
   // jsdom has no layout engine, so give the deep-link path a scroll to call.
   dom.window.HTMLElement.prototype.scrollIntoView = () => {};
     (dom.window as unknown as { fetch: typeof fetch }).fetch = (async (input: string) => {
-      const body = String(input).includes('phone_book') ? PHONEBOOK : template;
+      const body = String(input).includes('phone_book') ? PHONEBOOK : csv;
       return { ok: true, status: 200, text: async () => body, json: async () => JSON.parse(body) } as Response;
     }) as typeof fetch;
     dom.window.eval(config);
@@ -309,9 +315,12 @@ describe('deep links and type switching', () => {
   });
 
   test('the headphone type applies its blank-cell defaults', async () => {
-    const dom = await bootAt('https://example.com/ranking/?type=headphone');
+    // The template fills Style in, so blank it: an empty cell is what `defaults` covers.
+    const csv = `Brand,Model,Rank,Score,Driver,Style
+GrinEar,Reference,S,5,Hybrid,`;
+    const dom = await bootAt('https://example.com/ranking/?type=headphone', csv);
     const chips = [...cards(dom)[0]!.querySelectorAll('.device-card-chip')].map(c => c.textContent);
-    assert.ok(chips.includes('Open'), `expected an Open formfactor chip, got ${chips.join(', ')}`);
+    assert.ok(chips.includes('Open'), `expected an Open style chip, got ${chips.join(', ')}`);
   });
 
   test('clicking a type toggle swaps the list and the URL', async () => {

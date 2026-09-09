@@ -37,7 +37,7 @@ types: {
     phonebook: '../data/phone_book.json',
     measurementUrl: '../?share={file}',
     measurementsPageUrl: '../',          // header "measurements" icon link
-    defaults: { 'F/F': 'Open' },         // fills blank cells on this type
+    defaults: { Style: 'Open' },         // fills blank cells on this type
     rowFilter: { field: 'Category', values: ['iem'] },   // optional, see below
   },
 }
@@ -188,7 +188,7 @@ Add `blockLabel` to prefix the block with a bold heading (`blockLabel: { default
 
 - `text` — substring match on `filter.match` (array of CSV headers) or the column's own `source`.
 - `select` — exact-match dropdown built from `filter.values`, or from the column's `scale` when `values` is omitted.
-- `select-auto` — exact-match dropdown whose options are collected from the loaded rows, sorted alphabetically. Good for `Type` and formfactor columns where the value set changes as the sheet grows.
+- `select-auto` — exact-match dropdown whose options are collected from the loaded rows, sorted alphabetically. Good for `Driver` and `Style` columns where the value set changes as the sheet grows.
 
 ### Per-language data columns
 
