@@ -139,7 +139,7 @@ render: { kind: 'score-badge', min: 0, max: 10, decimals: 1 }      // colored 0-
 
 `stars` clips a row of star icons to a percentage, so any fraction works without half-star artwork. `score-badge` interpolates its color across `render.colors` between `min` and `max`, so a 0-to-100 scale needs no per-value color list.
 
-Three ready-made configurations live in [`presets/`](/squigRanking/docs/ranks/choosing/): `letter` (S through F), `stars` (five stars in half steps), and `score` (0 to 10). Each ships its own `TEMPLATE.csv` matching that scale. Copy the pair you want over `ranking-config.js` and `TEMPLATE.csv`.
+Three ready-made configurations live in [`presets/`](/ranks/choosing/): `letter` (S through F), `stars` (five stars in half steps), and `score` (0 to 10). Each ships its own `TEMPLATE.csv` matching that scale. Copy the pair you want over `ranking-config.js` and `TEMPLATE.csv`.
 
 #### Configs written before scales
 
@@ -306,7 +306,7 @@ Nothing in the page enumerates languages — a tag is supported exactly as far a
 - Every `I18nString` in the file — column `label` and `blockLabel`, `scale[].label`, type labels, `sort.labels`, `search.label`, `chrome.title`, `footer.note`, link labels — takes `i18n: { ja: '...' }` alongside its `default`.
 - `i18n` — the interface strings, if you want them out of English.
 
-The [config editor](/squigRanking/docs/config-editor/) writes all of it: add a tag, a name and a column suffix in its language step and it fills in `languages`, the `i18nSource` entries, and a box for every piece of wording and every interface string. Korean comes pre-filled; anything else starts empty and falls back to English until you type in it.
+The [config editor](/config-editor/) writes all of it: add a tag, a name and a column suffix in its language step and it fills in `languages`, the `i18nSource` entries, and a box for every piece of wording and every interface string. Korean comes pre-filled; anything else starts empty and falls back to English until you type in it.
 
 ### How a reader's language is chosen
 
@@ -339,7 +339,7 @@ cdn: {
 | `versionsUrl` | derived from `base` | Full URL to `versions.json`. |
 | `debug` | `false` | Load the readable `core.js` instead of `core.min.js`. |
 
-Setting `majorVersion` is the usual choice: bug fixes arrive on their own, and a major bump never does. See [Deploying](/squigRanking/docs/setup/deploying/#staying-up-to-date).
+Setting `majorVersion` is the usual choice: bug fixes arrive on their own, and a major bump never does. See [Deploying](/setup/deploying/#staying-up-to-date).
 
 :::note
 `source: 'local'` only says *where* to look, not *which* build — the folder's `core.min.js` is whatever you last copied there. Version pinning is a CDN concept.
@@ -386,4 +386,4 @@ Name the tag in `languages`, give each translated column an `i18nSource` entry, 
 
 - URL: `.../ranking/?type=earphone#apple-airpods-max-usb-c`
 - `?type=` selects the tab; `#<slug>` selects the tab that contains the card, scrolls to it, and highlights it.
-- Slug format is controlled by `deepLink.template` + `deepLink.slugify`. CrinGraph's `listAugment.js` and modernGraphTool's `PhoneSelector.svelte` build links in this format — see [the CrinGraph guide](/squigRanking/docs/integration/cringraph/) and [the modernGraphTool guide](/squigRanking/docs/integration/moderngraphtool/).
+- Slug format is controlled by `deepLink.template` + `deepLink.slugify`. CrinGraph's `listAugment.js` and modernGraphTool's `PhoneSelector.svelte` build links in this format — see [the CrinGraph guide](/integration/cringraph/) and [the modernGraphTool guide](/integration/moderngraphtool/).

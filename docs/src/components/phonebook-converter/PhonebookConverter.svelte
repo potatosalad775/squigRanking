@@ -11,6 +11,10 @@
 	import { DESCRIPTION_TARGETS, TEMPLATE_HEADERS } from './templates.ts';
 	import { PRESETS, PRESET_LABELS, presetState } from '../config-editor/form.ts';
 
+	// The deployment base, so this link does not spell the subpath out. Vite
+	// inlines it at build time; `astro.config.mjs` is the only place it is set.
+	const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 	// The parsed file, kept so a changed reading option can rebuild the list
 	// without a second download. Deliberately not `$state`: nothing renders from
 	// it, and proxying a few hundred brands to watch a value nobody mutates is
@@ -328,7 +332,7 @@
 			<p class="note spaced">
 				Add a column for what the template has no home for. Each one needs a matching entry in
 				<code>columns</code> in your config before the page will show it — see
-				<a href="/squigRanking/docs/setup/your-sheet/#adding-a-column">adding a column</a>.
+				<a href="{BASE}/setup/your-sheet/#adding-a-column">adding a column</a>.
 			</p>
 			<div class="options inline">
 				<label class="toggle">

@@ -21,11 +21,11 @@ Each part of a review lives in its own column. There is no markup to learn and n
 | `Notes`          | A muted block, for caveats and measurement remarks       |
 | `Tags`           | Comma-separated pills, which are also searchable         |
 
-`Score` is optional because a rank scale can say what each grade is worth. A sheet with only `Brand`, `Model` and `Rank` still sorts by score and still shows an average. See [How a scale works](/squigRanking/docs/ranks/scale/).
+`Score` is optional because a rank scale can say what each grade is worth. A sheet with only `Brand`, `Model` and `Rank` still sorts by score and still shows an average. See [How a scale works](/ranks/scale/).
 
 ## Starting from your phone book
 
-`Brand` and `Model` are exactly what your measurement site already lists. Rather than retyping a few hundred of them, feed your `phone_book.json` to the [phone book converter](/squigRanking/docs/phonebook-converter/): it reads both the CrinGraph and the modernGraphTool dialect, lets you uncheck what you do not want ranked, and hands back rows with the same header as the template above. If your phone book already carries `reviewScore` values, it can seed the `Rank` column from them too.
+`Brand` and `Model` are exactly what your measurement site already lists. Rather than retyping a few hundred of them, feed your `phone_book.json` to the [phone book converter](/phonebook-converter/): it reads both the CrinGraph and the modernGraphTool dialect, lets you uncheck what you do not want ranked, and hands back rows with the same header as the template above. If your phone book already carries `reviewScore` values, it can seed the `Rank` column from them too.
 
 ## What is in the workbook
 
@@ -37,7 +37,7 @@ If you started from the spreadsheet template rather than a bare CSV, it has thre
 
 **Stats** counts your devices per grade, works out the average, and charts it. Nothing to maintain; the formulas cover a thousand rows.
 
-Adding a grade to the sheet does not add it to the page. The `scale` in your config is what the page reads, so change both. The [config editor](/squigRanking/docs/config-editor/) is the easy way to keep them lined up.
+Adding a grade to the sheet does not add it to the page. The `scale` in your config is what the page reads, so change both. The [config editor](/config-editor/) is the easy way to keep them lined up.
 
 ## Line breaks are preserved
 
@@ -70,7 +70,7 @@ A blank translated cell falls back to `source`, the language-neutral header, per
 
 ### Using another language
 
-The [config editor](/squigRanking/docs/config-editor/) has a language step. Give it a tag, a name and a column suffix — `ja`, Japanese, `_JA` — and it writes the four pieces a language needs:
+The [config editor](/config-editor/) has a language step. Give it a tag, a name and a column suffix — `ja`, Japanese, `_JA` — and it writes the four pieces a language needs:
 
 - `languages: { en: 'English', ja: 'Japanese' }`, which is the order the toggle cycles through;
 - an `i18nSource` entry per translated column, pointing at `Comment_JA` and its siblings;
@@ -81,7 +81,7 @@ Korean is the one language it knows the words for, so it arrives already filled 
 
 It asks for both a tag and a name because they do different jobs. The tag is what the page matches against the reader's browser, so `ja` and not `Japanese`. The name is what the language button calls that language: the tooltip names the language it switches to, and the page builds that sentence out of these names rather than guessing. Word it yourself in the interface strings if you would rather it read in the language itself.
 
-Readers land on their stored choice if they have one, then on a match for their browser's language, then on the first entry in `languages`. Removing every language leaves an English-only page, and the toggle disappears along with it, since there is nothing to switch to. [`languages` and `i18n`](/squigRanking/docs/config/reference/#languages-and-i18n) has the whole surface for editing the file by hand.
+Readers land on their stored choice if they have one, then on a match for their browser's language, then on the first entry in `languages`. Removing every language leaves an English-only page, and the toggle disappears along with it, since there is nothing to switch to. [`languages` and `i18n`](/config/reference/#languages-and-i18n) has the whole surface for editing the file by hand.
 
 ## Header names are wired in the config
 
@@ -108,7 +108,7 @@ Say you want a price column.
 
 3. Reload.
 
-No core changes, no build step. The [configuration reference](/squigRanking/docs/config/reference/) lists every renderer and filter kind you can use there.
+No core changes, no build step. The [configuration reference](/config/reference/) lists every renderer and filter kind you can use there.
 
 ## Keeping one sheet for two device types
 

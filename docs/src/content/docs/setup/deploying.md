@@ -53,7 +53,7 @@ window.RANKING_CONFIG = {
 };
 ```
 
-Pin an exact build with `version: '1.4.2'` when you need a deploy frozen — during an event, or while you work out whether a regression is yours. Both keys are described in [`cdn`](/squigRanking/docs/config/reference/#cdn).
+Pin an exact build with `version: '1.4.2'` when you need a deploy frozen — during an event, or while you work out whether a regression is yours. Both keys are described in [`cdn`](/config/reference/#cdn).
 
 Versioned builds are immutable: `v1.4.2` is published once and never rewritten. Updating moves a pointer in `versions.json`, so rolling back is the same move in reverse and takes effect on the next page load.
 
