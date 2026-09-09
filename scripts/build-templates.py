@@ -88,6 +88,12 @@ def read_rows(preset: str) -> tuple[list[str], list[list[str]]]:
     path = os.path.join(ROOT, "presets", preset, "TEMPLATE.csv")
     with open(path, encoding="utf-8", newline="") as handle:
         rows = list(csv.reader(handle))
+    # `newline=""` is what preserves a quoted cell's own line breaks, and on a
+    # CRLF checkout those reach us as \r\n. openpyxl round-trips \r\n into a
+    # doubled newline, so one CSV yields a different workbook depending on the
+    # platform that built it and --check fails on whichever platform did not.
+    # The cell content is the same either way, so settle on one form here.
+    rows = [[cell.replace("\r\n", "\n").replace("\r", "\n") for cell in row] for row in rows]
     return rows[0], rows[1:]
 
 

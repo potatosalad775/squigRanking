@@ -1,0 +1,7 @@
+# The preset CSVs carry line breaks inside quoted cells, and those breaks end up
+# verbatim in the generated TEMPLATE.xlsx. Letting the checkout decide their form
+# makes build-templates.py --check platform-dependent, so pin them to LF.
+*.csv text eol=lf
+
+# Generated workbooks are zips: never touch their bytes, never try to diff them.
+*.xlsx binary
