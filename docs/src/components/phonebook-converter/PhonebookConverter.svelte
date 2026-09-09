@@ -409,6 +409,10 @@
 				{/if}
 			</p>
 			<p class="note">
+				If it pastes into a single cell, highlight the cell, then use <em>Data → Split text to Columns</em> 
+				and choose <em>Comma</em> (or let it detect automatically) in the small popup.
+			</p>
+			<p class="note">
 				<strong>Into a bare sheet:</strong> take the CSV and use <em>File → Import</em>, or
 				<em>Copy with the header</em> into cell <code>A1</code>.
 			</p>
