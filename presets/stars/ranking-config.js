@@ -9,7 +9,7 @@
 
 /** @type {import('squig-ranking').RankingConfig} */
 window.RANKING_CONFIG = {
-	configVersion: 3,
+	configVersion: 4,
 
 	types: {
 		earphone: {
