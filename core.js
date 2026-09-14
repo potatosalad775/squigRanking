@@ -1,4 +1,4 @@
-/*! squigRanking v1.0.0 | MIT | https://github.com/squigRanking */
+/*! squigRanking v1.0.1 | MIT | https://github.com/squigRanking */
 (function() {
 	//#region src/config.ts
 	const EMPTY = {
@@ -809,6 +809,7 @@
 	const ICON_LANGUAGE = "M18.5 10L22.9 21H20.745L19.544 18H15.454L14.255 21H12.101L16.5 10H18.5ZM10 2V4H16V6L14.0322 6.0006C13.2425 8.36616 11.9988 10.5057 10.4115 12.301C11.1344 12.9457 11.917 13.5176 12.7475 14.0079L11.9969 15.8855C10.9237 15.2781 9.91944 14.5524 8.99961 13.7249C7.21403 15.332 5.10914 16.5553 2.79891 17.2734L2.26257 15.3442C4.2385 14.7203 6.04543 13.6737 7.59042 12.3021C6.46277 11.0281 5.50873 9.57985 4.76742 8.00028L7.00684 8.00037C7.57018 9.03885 8.23979 10.0033 8.99967 10.877C10.2283 9.46508 11.2205 7.81616 11.9095 6.00101L2 6V4H8V2H10ZM17.5 12.8852L16.253 16H18.745L17.5 12.8852Z";
 	const ICON_STATS = "M2 13H8V21H2V13ZM9 3H15V21H9V3ZM16 8H22V21H16V8Z";
 	const ICON_ARROW_UP = "M13.0001 7.82843V20H11.0001V7.82843L5.63614 13.1924L4.22192 11.7782L12.0001 4L19.7783 11.7782L18.3641 13.1924L13.0001 7.82843Z";
+	const ICON_GITHUB = "M12 2C6.475 2 2 6.475 2 12C2 16.425 4.8625 20.1625 8.8375 21.4875C9.3375 21.575 9.525 21.275 9.525 21.0125C9.525 20.775 9.5125 19.9875 9.5125 19.15C6.7375 19.75 6.15 17.8125 6.15 17.8125C5.6875 16.6375 5.0125 16.325 5.0125 16.325C4.0875 15.6875 5.0875 15.7 5.0875 15.7C6.1125 15.775 6.65 16.7375 6.65 16.7375C7.5625 18.3125 9.0625 17.85 9.5625 17.625C9.6375 16.9625 9.9 16.5125 10.1875 16.2625C7.9625 16.0125 5.625 15.15 5.625 11.475C5.625 10.425 6 9.5625 6.6375 8.9C6.5375 8.65 6.2 7.6625 6.7375 6.3375C6.7375 6.3375 7.575 6.075 9.475 7.3625C10.275 7.1375 11.125 7.025 11.975 7.025C12.825 7.025 13.675 7.1375 14.475 7.3625C16.375 6.0875 17.2125 6.3375 17.2125 6.3375C17.75 7.6625 17.4125 8.65 17.3125 8.9C17.95 9.5625 18.325 10.425 18.325 11.475C18.325 15.1625 15.975 16 13.7375 16.25C14.1 16.5625 14.425 17.175 14.425 18.1125C14.425 19.4625 14.4125 20.6875 14.4125 21.0125C14.4125 21.275 14.6 21.5875 15.1 21.4875C19.075 20.1625 21.9375 16.4125 21.9375 12C21.9375 6.475 17.525 2 12 2Z";
 	//#endregion
 	//#region src/render/blocks.ts
 	const BLOCK_ICONS = {
@@ -1290,7 +1291,29 @@
 		if (!note) return [];
 		return (Array.isArray(note) ? note : [note]).map((entry) => resolveI18n(entry, lang)).filter(Boolean);
 	}
-	/** Rebuild the footer. Hidden entirely when the config gives it nothing to say. */
+	const PROJECT_URL = "https://github.com/potatosalad775/squigRanking";
+	/**
+	* The credit line. Not operator copy and not translated: it names the project
+	* the page is built from, which is the same word in every language.
+	*/
+	function builtWith() {
+		const anchor = el("a", {
+			class: "footer-credit",
+			href: PROJECT_URL,
+			target: "_blank",
+			rel: "noopener",
+			title: "squigRanking on GitHub"
+		});
+		anchor.appendChild(svgIcon([ICON_GITHUB]));
+		anchor.appendChild(el("span", { text: "built with squigRanking" }));
+		return anchor;
+	}
+	/**
+	* Rebuild the footer.
+	*
+	* Always rendered: even a config that says nothing of its own still carries
+	* the credit, so the bar is never empty and never hidden.
+	*/
 	function renderFooter(lang) {
 		const host = document.getElementById("ranking-footer");
 		if (!host) return;
@@ -1298,8 +1321,7 @@
 		const notes = footerNotes(footer.note, lang);
 		const links = footer.links ?? [];
 		host.replaceChildren();
-		host.hidden = !notes.length && !links.length;
-		if (host.hidden) return;
+		host.hidden = false;
 		if (notes.length) {
 			const top = el("div", { class: "footer-top" });
 			for (const note of notes) {
@@ -1309,12 +1331,14 @@
 			}
 			host.appendChild(top);
 		}
-		if (notes.length && links.length) host.appendChild(el("hr", { class: "footer-hr" }));
+		if (notes.length) host.appendChild(el("hr", { class: "footer-hr" }));
+		const bottom = el("div", { class: "footer-bottom" }, [builtWith()]);
 		if (links.length) {
-			const bottom = el("div", { class: "footer-bottom" });
-			for (const link of links) bottom.appendChild(chromeLink(link, lang, "footer-link"));
-			host.appendChild(bottom);
+			const group = el("div", { class: "footer-links" });
+			for (const link of links) group.appendChild(chromeLink(link, lang, "footer-link"));
+			bottom.appendChild(group);
 		}
+		host.appendChild(bottom);
 	}
 	/**
 	* Build the containers the rest of core renders into, plus the two pieces of

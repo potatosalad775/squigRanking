@@ -25,11 +25,11 @@ presets/<name>/ over the ones here. Available: letter, score, stars.
 
 Setup guide: https://potatosalad775.github.io/squigRanking/docs/
 
-core.js              65.7 kB
-core.min.js          32.9 kB
+core.js              67.3 kB
+core.min.js          34.2 kB
 loader.js            8.7 kB
 index.html           3.1 kB
-style.css            17.9 kB
+style.css            18.4 kB
 ranking-config.js    6.4 kB
 TEMPLATE.csv         0.8 kB
 TEMPLATE.xlsx        10.8 kB
