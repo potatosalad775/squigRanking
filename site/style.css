@@ -612,6 +612,7 @@ select, input {
 .filter-collapse-toggle {
   display: flex;
   flex-direction: row;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.7em;
   width: 100%;
@@ -635,7 +636,7 @@ select, input {
 .filter-toggle-icon {
   display:inline-block;
   vertical-align:middle;
-  margin-bottom:0.1rem;
+  margin-top:0.25rem;
   transition: transform 0.3s cubic-bezier(0.4, 1.6, 0.6, 1);
 }
 .filter-collapse-content-header {
