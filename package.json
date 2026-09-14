@@ -1,6 +1,6 @@
 {
   "name": "squig-ranking",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Static, config-driven ranking page for CrinGraph / modernGraphTool squig deployments.",
   "type": "module",
   "types": "./dist/types.d.ts",
