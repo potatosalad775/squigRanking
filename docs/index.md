@@ -46,7 +46,8 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 	</Card>
 	<Card title="Links both ways" icon="external">
 		Review-score badges in CrinGraph and modernGraphTool link into the matching
-		card, and every card links back to the measurement.
+		card, and every card links back to the measurement. modernGraphTool can
+		show grades straight from your sheet, too.
 	</Card>
 </CardGrid>
 

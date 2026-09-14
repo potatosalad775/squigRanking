@@ -4,13 +4,14 @@
 
 - The audience is an operator setting up their own page, not an end user browsing one.
   Almost every question is about the spreadsheet, `ranking-config.js`, or wiring the
-  badge link in CrinGraph or modernGraphTool.
+  badge link in CrinGraph or modernGraphTool, or pointing modernGraphTool at the same
+  sheet so it shows grades from it.
 - `config/reference` is the authoritative page for config keys, but the real source of
   truth is `src/types.ts` in the repository, published with the build as
   `dist/types.d.ts`. Prefer the shipped types over anything inferred from an example.
 - Two pages of the site are interactive tools rather than documentation and so carry no
   text here: `/config-editor/` builds a `ranking-config.js`, and `/phonebook-converter/`
-  turns the spreadsheet into a CrinGraph `phone_book.json`.
+  turns a CrinGraph or modernGraphTool `phone_book.json` into starting rows for the sheet.
 - Every page is also available as raw Markdown by appending `.md` to its URL.
 
 ## Documentation Sets

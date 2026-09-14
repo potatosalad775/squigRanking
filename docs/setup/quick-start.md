@@ -110,4 +110,4 @@ Almost always the CSV link. Open the URL from step 2 directly in a browser tab: 
 
 - [Filling in your sheet](/setup/your-sheet/) covers what each column does.
 - [Choosing a rank style](/ranks/choosing/) if letter grades are not what you want.
-- [Linking from your graph tool](/integration/cringraph/) so review scores become clickable.
+- Linking from your graph tool so review scores become clickable: [CrinGraph](/integration/cringraph/) or [modernGraphTool](/integration/moderngraphtool/), which can also show grades straight from your sheet.
