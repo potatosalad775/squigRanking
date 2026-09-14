@@ -3,7 +3,7 @@ title: 'modernGraphTool'
 description: "Link modernGraphTool's device list to your ranking page, and optionally have it show grades from the same sheet."
 ---
 
-modernGraphTool (mGT) has a `RANKING` section in its `config.js` that does two independent things. Most deploys only need the first:
+[modernGraphTool (mGT)](https://potatosalad775.github.io/modernGraphTool/docs) has a `RANKING` section in its `config.js` that does two independent things. Most deploys only need the first:
 
 1. **Link the review score to its card.** The score already in your `phone_book.json` becomes a link into this page. One config value, nothing fetched. Works with any ranking page or spreadsheet, not just this one.
 2. **Show grades from your sheet.** mGT reads your `ranking-config.js` and displays each device's grade from the same spreadsheet this page uses, as the same colored badge. The sheet becomes the single place grades live — edit a grade once and both the ranking page and the device list follow.
