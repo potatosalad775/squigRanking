@@ -387,3 +387,16 @@ Name the tag in `languages`, give each translated column an `i18nSource` entry, 
 - URL: `.../ranking/?type=earphone#apple-airpods-max-usb-c`
 - `?type=` selects the tab; `#<slug>` selects the tab that contains the card, scrolls to it, and highlights it.
 - Slug format is controlled by `deepLink.template` + `deepLink.slugify`. CrinGraph's `listAugment.js` and modernGraphTool's `PhoneSelector.svelte` build links in this format — see [the CrinGraph guide](/integration/cringraph/) and [the modernGraphTool guide](/integration/moderngraphtool/).
+
+---
+
+## Keys modernGraphTool reads
+
+A modernGraphTool deploy can point its `RANKING.CONFIG_URL` at this file to show grades from your sheet. It reads only:
+
+- `types[<type>].source.url` and `types[<type>].rowFilter`
+- the `role: 'rank'` column's `source` and `scale`
+- the `role: 'brand'` and `role: 'model'` columns' `source`
+- `deepLink`
+
+Everything else here is free to change without affecting it. Dropping `role: 'rank'` from the rank column, or renaming any key above, silently stops those grades appearing. See [the modernGraphTool guide](/integration/moderngraphtool/#what-mgt-reads-from-your-config).

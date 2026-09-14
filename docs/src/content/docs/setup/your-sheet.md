@@ -27,6 +27,8 @@ Each part of a review lives in its own column. There is no markup to learn and n
 
 `Brand` and `Model` are exactly what your measurement site already lists. Rather than retyping a few hundred of them, feed your `phone_book.json` to the [phone book converter](/phonebook-converter/): it reads both the CrinGraph and the modernGraphTool dialect, lets you uncheck what you do not want ranked, and hands back rows with the same header as the template above. If your phone book already carries `reviewScore` values, it can seed the `Rank` column from them too.
 
+Once the sheet exists, it can be the only place you grade. modernGraphTool can [read its grades from this sheet](/integration/moderngraphtool/#2-show-grades-from-your-sheet), and when it does, a device's sheet grade wins over its phone book `reviewScore` — which then only fills in devices the sheet does not rank.
+
 ## What is in the workbook
 
 If you started from the spreadsheet template rather than a bare CSV, it has three tabs.
@@ -37,7 +39,7 @@ If you started from the spreadsheet template rather than a bare CSV, it has thre
 
 **Stats** counts your devices per grade, works out the average, and charts it. Nothing to maintain; the formulas cover a thousand rows.
 
-Adding a grade to the sheet does not add it to the page. The `scale` in your config is what the page reads, so change both. The [config editor](/config-editor/) is the easy way to keep them lined up.
+Adding a grade to the sheet does not add it to the page. The `scale` in your config is what the page reads — and what modernGraphTool reads, if it shows grades from this sheet — so change both. The [config editor](/config-editor/) is the easy way to keep them lined up.
 
 ## Line breaks are preserved
 
