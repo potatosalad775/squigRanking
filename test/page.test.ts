@@ -250,15 +250,27 @@ describe('language and chrome', () => {
     const dom = await bootPage(template, withChrome(
       "chrome: { footer: { links: [{ href: 'https://example.com', label: 'My site', newTab: true }] } }",
     ));
-    const link = dom.window.document.querySelector<HTMLAnchorElement>('.footer-bottom a')!;
+    const link = dom.window.document.querySelector<HTMLAnchorElement>('.footer-links a')!;
     assert.equal(link.textContent, 'My site');
     assert.equal(link.getAttribute('href'), 'https://example.com');
     assert.equal(link.target, '_blank');
   });
 
-  test('a chrome config with nothing to say leaves no empty footer bar', async () => {
+  test('the credit is rendered whenever the footer is, links or not', async () => {
+    const dom = await bootPage(template, withChrome("chrome: { footer: { note: 'Hi' } }"));
+    const credit = dom.window.document.querySelector<HTMLAnchorElement>('.footer-credit')!;
+    assert.equal(credit.getAttribute('href'), 'https://github.com/potatosalad775/squigRanking');
+    assert.equal(credit.textContent, 'built with squigRanking');
+    assert.ok(credit.querySelector('svg'), 'the credit has no GitHub icon');
+  });
+
+  test('a chrome config with nothing to say leaves a footer holding just the credit', async () => {
     const dom = await bootPage(template, withChrome('chrome: {}'));
-    assert.equal(dom.window.document.querySelector<HTMLElement>('#ranking-footer')!.hidden, true);
+    const host = dom.window.document.querySelector<HTMLElement>('#ranking-footer')!;
+    assert.equal(host.hidden, false);
+    assert.equal(host.querySelector('.footer-note'), null);
+    assert.equal(host.querySelector('.footer-links'), null);
+    assert.ok(host.querySelector('.footer-credit'), 'the credit is missing');
   });
 
   test('the toggle switches every chrome string and card label to Korean', async () => {

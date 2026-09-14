@@ -269,7 +269,7 @@ chrome: {
 
 A link takes `href`, an optional `label` (an `I18nString`), an optional `icon` (`measurements`, `external` or `info`), an optional `title` for the tooltip and accessible name, and `newTab`.
 
-There are no defaults for the wording: a config with no `chrome.title` renders no title, and one with no `footer` renders no footer bar at all rather than an empty strip. The shipped presets set both, so a fresh download has them.
+There are no defaults for the wording: a config with no `chrome.title` renders no title, and one with no `footer` renders neither a note nor links. The shipped presets set both, so a fresh download has them. The footer bar itself is always there, because it carries the *built with squigRanking* credit on its left; your `footer.links` sit opposite it on the right.
 
 What stays in `index.html` is the `<head>`: `<title>`, the `og:` tags, the canonical URL and the favicon. Those are read by crawlers and link previews before any script runs, so they cannot come from a config.
 

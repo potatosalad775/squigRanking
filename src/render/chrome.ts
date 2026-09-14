@@ -12,8 +12,8 @@
 import { getConfig, resolveI18n } from '../config.ts';
 import { appendTextWithBreaks, el, svgIcon } from '../dom.ts';
 import {
-  ICON_ARROW_UP, ICON_EXTERNAL_LINK, ICON_LANGUAGE, ICON_MEASUREMENTS, ICON_QUESTION,
-  ICON_STATS, ICON_THEME,
+  ICON_ARROW_UP, ICON_EXTERNAL_LINK, ICON_GITHUB, ICON_LANGUAGE, ICON_MEASUREMENTS,
+  ICON_QUESTION, ICON_STATS, ICON_THEME,
 } from '../icons.ts';
 import { languages, t } from '../i18n.ts';
 import type { ChromeConfig, ChromeIcon, ChromeLink, I18nString, Lang } from '../types.ts';
@@ -165,7 +165,31 @@ function footerNotes(note: I18nString | I18nString[] | undefined, lang: Lang): s
   return list.map(entry => resolveI18n(entry, lang)).filter(Boolean);
 }
 
-/** Rebuild the footer. Hidden entirely when the config gives it nothing to say. */
+const PROJECT_URL = 'https://github.com/potatosalad775/squigRanking';
+
+/**
+ * The credit line. Not operator copy and not translated: it names the project
+ * the page is built from, which is the same word in every language.
+ */
+function builtWith(): HTMLAnchorElement {
+  const anchor = el('a', {
+    class: 'footer-credit',
+    href: PROJECT_URL,
+    target: '_blank',
+    rel: 'noopener',
+    title: 'squigRanking on GitHub',
+  });
+  anchor.appendChild(svgIcon([ICON_GITHUB]));
+  anchor.appendChild(el('span', { text: 'built with squigRanking' }));
+  return anchor;
+}
+
+/**
+ * Rebuild the footer.
+ *
+ * Always rendered: even a config that says nothing of its own still carries
+ * the credit, so the bar is never empty and never hidden.
+ */
 export function renderFooter(lang: Lang): void {
   const host = document.getElementById('ranking-footer');
   if (!host) return;
@@ -174,8 +198,7 @@ export function renderFooter(lang: Lang): void {
   const links = footer.links ?? [];
 
   host.replaceChildren();
-  host.hidden = !notes.length && !links.length;
-  if (host.hidden) return;
+  host.hidden = false;
 
   if (notes.length) {
     const top = el('div', { class: 'footer-top' });
@@ -186,12 +209,17 @@ export function renderFooter(lang: Lang): void {
     }
     host.appendChild(top);
   }
-  if (notes.length && links.length) host.appendChild(el('hr', { class: 'footer-hr' }));
+  if (notes.length) host.appendChild(el('hr', { class: 'footer-hr' }));
+
+  // The credit sits opposite the operator's own links, so the row exists even
+  // when the config declares none.
+  const bottom = el('div', { class: 'footer-bottom' }, [builtWith()]);
   if (links.length) {
-    const bottom = el('div', { class: 'footer-bottom' });
-    for (const link of links) bottom.appendChild(chromeLink(link, lang, 'footer-link'));
-    host.appendChild(bottom);
+    const group = el('div', { class: 'footer-links' });
+    for (const link of links) group.appendChild(chromeLink(link, lang, 'footer-link'));
+    bottom.appendChild(group);
   }
+  host.appendChild(bottom);
 }
 
 // ---------------- Content ----------------

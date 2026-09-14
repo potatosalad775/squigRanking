@@ -723,9 +723,34 @@ select, input {
 }
 .footer-bottom {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+}
+.footer-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85em;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  opacity: 0.75;
+  svg {
+    width: 1.15em;
+    height: 1.15em;
+  }
+}
+.footer-credit:hover {
+  opacity: 1;
+}
+/* Pushed to the far end even when the credit is the only other child. */
+.footer-links {
+  display: flex;
   flex-direction: column;
   gap: 0.5rem;
   align-items: flex-end;
+  margin-left: auto;
   a {
     font-size: 1rem;
     color: var(--color-text-muted);
